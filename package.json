@@ -1,0 +1,13 @@
+{
+  "name": "extension-renfe",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Extension de Chrome que reserva plazas de abono en Renfe",
+  "scripts": {
+    "test": "node --test 'test/**/*.test.js'"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.1"
+  }
+}

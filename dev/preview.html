@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>preview panel</title>
+<style>
+body { margin:0; background:#e9e4ec; font-family:-apple-system,sans-serif; }
+.escena { position:relative; height:330px; border-bottom:1px solid #cbc0d0; padding:10px 14px; }
+.escena h2 { margin:0; font-size:12px; color:#6b1f7c; text-transform:uppercase; letter-spacing:.6px; }
+#renfebot-panel { display:none; }
+.slot { position:absolute; right:16px; bottom:16px; }
+</style></head>
+<body>
+<div id="escenas"></div>
+<script type="module">
+import { montarPanel, actualizarPanel } from "../src/content/panel/panel.js";
+import { FASE, estadoInicial } from "../src/shared/state.js";
+
+const CASOS = [
+  ["Parado, sin trenes marcados", { fase: FASE.IDLE }, { trenes: [] }],
+  ["Buscando (todo normal)", { fase: FASE.SCAN, running: true, cycle: 37, lastCycleAt: Date.now(),
+     ultimoDiagnostico: { enTabla: 18, vigilados: 3, vigiladosPresentes: 3, refresco: "onSelect" } },
+    { trenes: [{numtren:"09132",salida:"14.53"},{numtren:"09140",salida:"15.07"},{numtren:"12554",salida:"17.20"}] }],
+  ["Parado porque los vigilados desaparecieron", { fase: FASE.PAUSED_ERRORS, cycle: 22, lastCycleAt: Date.now(),
+     lastError: "Los 2 tren(es) que vigilas ya no estan en la tabla. Rehaz la busqueda y vuelve a marcarlos.",
+     ultimoDiagnostico: { enTabla: 5, vigilados: 2, vigiladosPresentes: 0, refresco: "renfe no repinto las filas" } },
+    { trenes: [{numtren:"09132",salida:"14.53"}] }],
+  ["Reservado", { fase: FASE.DONE, cycle: 88, lastCycleAt: Date.now(), result:{numtren:"09140"} },
+    { trenes: [{numtren:"09140",salida:"15.07"}] }],
+];
+
+const cont = document.getElementById("escenas");
+for (const [titulo, parcial, objetivo] of CASOS) {
+  const div = document.createElement("div");
+  div.className = "escena";
+  div.innerHTML = `<h2>${titulo}</h2><div class="slot"></div>`;
+  cont.appendChild(div);
+
+  // montar una instancia aislada por escena
+  const host = document.createElement("div");
+  div.querySelector(".slot").appendChild(host);
+  const modulo = await import(`../src/content/panel/panel.js?${Math.random()}`);
+  document.getElementById("renfebot-panel")?.remove();
+  modulo.montarPanel({});
+  const panelHost = document.getElementById("renfebot-panel");
+  panelHost.style.display = "block";
+  panelHost.id = "";
+  host.appendChild(panelHost);
+  panelHost.shadowRoot.querySelector(".panel").style.position = "static";
+  modulo.actualizarPanel({ ...estadoInicial(), ...parcial }, objetivo);
+}
+</script>
+</body></html>
