@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { conDefectos, normalizarIntervalo, FASE } from "../src/shared/state.js";
+import { conDefectos, normalizarIntervalo, estadoReiniciado, FASE } from "../src/shared/state.js";
 
 test("un almacenamiento vacio produce un estado valido y parado", () => {
   const estado = conDefectos(undefined);
@@ -38,4 +38,37 @@ test("un intervalo razonable pasa entero y los decimales se redondean", () => {
   assert.equal(normalizarIntervalo("7"), 7);
   assert.equal(normalizarIntervalo(7.4), 7);
   assert.equal(normalizarIntervalo(7.6), 8);
+});
+
+test("reiniciar conserva los ajustes y borra todo lo demas", () => {
+  const sucio = {
+    ...conDefectos(undefined),
+    running: true,
+    fase: FASE.DONE,
+    cycle: 88,
+    targets: [{ id: "actual", fecha: "12/09/2026", trenes: [{ numtren: "09132", salida: "14.53" }] }],
+    activeTargetId: "actual",
+    result: { numtren: "09132" },
+    lastError: "algo paso",
+    actualizadoEn: 1757000000000,
+    settings: { intervalSec: 12, maxErrorStreak: 5, debug: true },
+  };
+
+  const limpio = estadoReiniciado(sucio);
+
+  assert.equal(limpio.settings.intervalSec, 12, "el intervalo es una preferencia, no estado de busqueda");
+  assert.equal(limpio.settings.debug, true);
+  assert.equal(limpio.running, false);
+  assert.equal(limpio.fase, FASE.IDLE);
+  assert.equal(limpio.cycle, 0);
+  assert.deepEqual(limpio.targets, []);
+  assert.equal(limpio.activeTargetId, null);
+  assert.equal(limpio.result, null);
+  assert.equal(limpio.lastError, null);
+  assert.equal(limpio.actualizadoEn, null);
+});
+
+test("reiniciar sobre un estado sin ajustes no revienta", () => {
+  assert.equal(estadoReiniciado({}).settings.intervalSec, 5);
+  assert.equal(estadoReiniciado(undefined).settings.intervalSec, 5);
 });

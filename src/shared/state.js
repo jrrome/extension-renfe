@@ -37,6 +37,7 @@ export function estadoInicial() {
     cycle: 0,
     errorStreak: 0,
     lastCycleAt: null,
+    actualizadoEn: null,
     reservando: null,
     lastError: null,
     ultimoDiagnostico: null,
@@ -44,6 +45,11 @@ export function estadoInicial() {
     result: null,
     settings: { ...AJUSTES_DEFECTO },
   };
+}
+
+export function estadoReiniciado(actual) {
+  const base = estadoInicial();
+  return { ...base, settings: { ...base.settings, ...(actual?.settings || {}) } };
 }
 
 export function conDefectos(guardado) {
