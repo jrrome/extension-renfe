@@ -14,7 +14,7 @@ export const FASE = {
 export const VERSION = 1;
 const CLAVE = "estado";
 
-const AJUSTES_DEFECTO = { intervalSec: 5, maxErrorStreak: 5 };
+const AJUSTES_DEFECTO = { intervalSec: 5, maxErrorStreak: 5, debug: false };
 
 // el input del panel trae min y max, pero esos atributos no se aplican al leer .value:
 // borrar el campo da "" y Number("") es 0, que dejaria el bucle sin pausa ninguna
@@ -77,24 +77,57 @@ export function caducar(estado, ahora = Date.now()) {
 export function conDefectos(guardado) {
   const base = estadoInicial();
   if (!guardado || typeof guardado !== "object") return base;
+
+  const settings = { ...AJUSTES_DEFECTO, ...(guardado.settings || {}) };
   return {
     ...base,
     ...guardado,
-    settings: { ...AJUSTES_DEFECTO, ...(guardado.settings || {}) },
+    settings: {
+      ...settings,
+      intervalSec: normalizarIntervalo(settings.intervalSec),
+      debug: Boolean(settings.debug),
+    },
     version: VERSION,
   };
 }
 
-export async function leerEstado() {
+export async function leerEstado(ahora = Date.now()) {
   const datos = await chrome.storage.local.get(CLAVE);
-  return conDefectos(datos[CLAVE]);
+  return caducar(conDefectos(datos[CLAVE]), ahora);
 }
 
-export async function guardarEstado(parcial) {
+// leer, mezclar y escribir sin cerrojo tiene carrera: dos clics seguidos en checkboxes
+// leen el mismo estado y el segundo pisa al primero. encadenarlas lo evita dentro de
+// este contexto js, que es donde pasa de verdad.
+let cola = Promise.resolve();
+
+function enCola(tarea) {
+  const siguiente = cola.then(tarea, tarea);
+  cola = siguiente.catch(() => {});
+  return siguiente;
+}
+
+async function escribir(parcial) {
   const actual = await leerEstado();
-  const siguiente = conDefectos({ ...actual, ...parcial });
+  const siguiente = conDefectos({ ...actual, ...parcial, actualizadoEn: Date.now() });
   await chrome.storage.local.set({ [CLAVE]: siguiente });
   return siguiente;
+}
+
+async function limpiar() {
+  const actual = await leerEstado();
+  const limpio = estadoReiniciado(actual);
+  await chrome.storage.local.set({ [CLAVE]: limpio });
+  return limpio;
+}
+
+export function guardarEstado(parcial) {
+  return enCola(() => escribir(parcial));
+}
+
+// se escribe entero, no mezclado: reiniciar es sustituir el estado, no parchearlo
+export function reiniciarEstado() {
+  return enCola(limpiar);
 }
 
 export function objetivoActivo(estado) {
