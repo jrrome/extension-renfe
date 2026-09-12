@@ -23,8 +23,8 @@ async function pintarBadge() {
     return;
   }
   if (estado.running) {
-    // un numero que sube no le dice nada a quien no esta depurando; lo accionable
-    // (OK y !) no cambia entre modos
+    // un numero que sube no le dice nada a quien no esta depurando; los badges
+    // accionables, el de reservado y el de pausa, no cambian entre modos
     chrome.action.setBadgeText({ text: estado.settings.debug ? String(estado.cycle % 1000) : "•" });
     chrome.action.setBadgeBackgroundColor({ color: "#6b1f7c" });
     return;
