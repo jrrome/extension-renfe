@@ -1,6 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { conDefectos, normalizarIntervalo, estadoReiniciado, caducar, FASE } from "../src/shared/state.js";
+import {
+  conDefectos,
+  normalizarIntervalo,
+  estadoReiniciado,
+  caducar,
+  FASE,
+  REANUDAR_MAX_MS,
+  CADUCIDAD_MS,
+} from "../src/shared/state.js";
 
 test("un almacenamiento vacio produce un estado valido y parado", () => {
   const estado = conDefectos(undefined);
@@ -107,6 +115,11 @@ test("pasada una hora deja de reanudar solo pero conserva los trenes marcados", 
   assert.equal(salida.reservando, null, "una reserva a medias de hace dos horas ya no significa nada");
   assert.equal(salida.targets[0].trenes.length, 1, "los trenes marcados se conservan");
   assert.equal(salida.cycle, 42, "el ciclo se conserva hasta las 24 h");
+  assert.equal(
+    salida.actualizadoEn,
+    AHORA - 2 * HORA,
+    "el sello no se toca aqui, es lo que hace alcanzable el borrado de 24 h",
+  );
 });
 
 test("pasadas 24 horas se olvida todo menos los ajustes", () => {
@@ -127,5 +140,25 @@ test("aplicar la caducidad dos veces da lo mismo que aplicarla una", () => {
   for (const edad of [2 * HORA, 25 * HORA]) {
     const una = caducar(estadoBuscando(AHORA - edad), AHORA);
     assert.deepEqual(caducar(una, AHORA), una, `edad ${edad}`);
+    assert.equal(
+      caducar(una, AHORA),
+      una,
+      `edad ${edad}: la segunda pasada debe devolver el mismo objeto, no uno equivalente`,
+    );
   }
+});
+
+test("los umbrales caducan justo en el limite, no un instante antes", () => {
+  const enUmbralReanudar = caducar(estadoBuscando(AHORA - REANUDAR_MAX_MS), AHORA);
+  assert.equal(enUmbralReanudar.running, false, "en el umbral exacto de una hora ya debe degradar");
+
+  const justoAntesReanudar = caducar(estadoBuscando(AHORA - (REANUDAR_MAX_MS - 1)), AHORA);
+  assert.equal(justoAntesReanudar.running, true, "un milisegundo antes del umbral no debe degradar todavia");
+
+  const enUmbralCaducidad = caducar(estadoBuscando(AHORA - CADUCIDAD_MS), AHORA);
+  assert.deepEqual(enUmbralCaducidad.targets, [], "en el umbral exacto de 24 h ya debe borrarlo todo");
+
+  const justoAntesCaducidad = caducar(estadoBuscando(AHORA - (CADUCIDAD_MS - 1)), AHORA);
+  assert.equal(justoAntesCaducidad.running, false, "un milisegundo antes de las 24 h solo degrada, no borra");
+  assert.equal(justoAntesCaducidad.targets.length, 1, "un milisegundo antes de las 24 h todavia conserva los trenes");
 });
