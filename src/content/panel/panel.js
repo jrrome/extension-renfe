@@ -26,6 +26,9 @@ const ESTILOS = `
   color: #f2eef4; opacity: .75; border-radius: 4px;
 }
 .cab button:hover { opacity: 1; background: rgba(255,255,255,.14); }
+/* el all: unset de arriba pisa el display:none que el navegador aplica al atributo
+   hidden, asi que hay que devolverselo o el boton de reinicio no se oculta nunca */
+.cab button[hidden] { display: none; }
 .cuerpo { padding: 11px; }
 .panel.min .cuerpo { display: none; }
 .estado { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
