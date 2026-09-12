@@ -152,8 +152,8 @@ intervalo, la serialización de escrituras (con un `chrome.storage` de mentira c
 que es lo que hace que la carrera se reproduzca) y el redactado de los dos modos.
 
 No están cubiertos por tests, y necesitan comprobación manual contra Renfe: el
-refresco real, la reserva de punta a punta, la detección de caída de sesión y la
-de captcha/clave SMS.
+refresco real, la reserva de punta a punta, el watchdog del service worker y la
+detección de captcha/clave SMS.
 
 Para ver el panel sin necesidad de una sesión de Renfe abierta:
 
