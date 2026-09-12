@@ -62,7 +62,9 @@ async function objetivoDeLaPagina(estado) {
 
   // la busqueda es otra: la fase, el resultado y el diagnostico de la anterior ya no
   // describen nada de esta pagina, y si no se limpian el panel sigue anunciando el
-  // tren que reservaste ayer
+  // tren que reservaste ayer. estrategiaRefresco se deja fuera a proposito: describe
+  // como se comporta la web de renfe, no esta busqueda concreta, y conviene que
+  // sobreviva de una busqueda a otra en vez de perderse aqui
   await guardarEstado({
     targets: [nuevo],
     activeTargetId: ID_OBJETIVO,
@@ -77,6 +79,15 @@ async function objetivoDeLaPagina(estado) {
     result: null,
   });
   return nuevo;
+}
+
+// tras un reinicio el estado se queda sin objetivo, y sin objetivo marcar un tren no
+// escribe nada y el boton principal no arranca. hay que volver a crearlo para esta
+// pagina o la interfaz queda muerta hasta recargar.
+async function asegurarObjetivo() {
+  const estado = await leerEstado();
+  if (objetivoActivo(estado)) return;
+  await objetivoDeLaPagina(estado);
 }
 
 async function alternarTren(numtren, salida, marcado) {
@@ -132,6 +143,7 @@ async function enPaginaDeTrenes(estado) {
     alReiniciar: async () => {
       pararBucle();
       await reiniciarEstado();
+      await asegurarObjetivo();
       await pintar();
     },
     alCambiarIntervalo: (segundos) =>
@@ -158,8 +170,14 @@ async function enPaginaDeTrenes(estado) {
   }
 
   // sin esto el panel se queda congelado con lo que hubiera al montarlo: el bucle
-  // escribe el estado en cada paso pero nadie estaba escuchando esos cambios
-  alCambiarEstado(() => pintar());
+  // escribe el estado en cada paso pero nadie estaba escuchando esos cambios.
+  // tambien es aqui donde se recrea el objetivo tras un reinicio del popup: ese
+  // reinicio escribe el estado limpio directamente en chrome.storage, y este
+  // suscriptor es lo primero que corre despues de esa escritura
+  alCambiarEstado(async () => {
+    await asegurarObjetivo();
+    await pintar();
+  });
 
   await pintar();
   const ahora = await leerEstado();
