@@ -1,8 +1,7 @@
-import { FASE, leerEstado, guardarEstado } from "../shared/state.js";
+import { FASE, leerEstado, guardarEstado, SIN_LATIDO_MS } from "../shared/state.js";
 import { MSG } from "../shared/messages.js";
 
 const ALARMA_VIGILANCIA = "vigilancia";
-const SIN_LATIDO_MS = 2 * 60 * 1000;
 
 const ICONO = "icons/icon128.png";
 

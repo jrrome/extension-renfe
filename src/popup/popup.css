@@ -37,3 +37,6 @@ header h1 { margin: 0; font-size: 13.5px; font-weight: 600; letter-spacing: .3px
 .parar:hover { background: #a5333a; }
 .reiniciar { background: #33193a; color: #b49ebb; }
 .reiniciar:hover { background: #3f1f47; color: #f2eef4; }
+/* el display:block de arriba es de origen autor y gana al display:none que el
+   navegador aplica al atributo hidden, asi que hay que devolverselo aqui */
+.parar[hidden], .reiniciar[hidden] { display: none; }

@@ -108,6 +108,11 @@ export async function arrancarBucle() {
       }
 
       if (libre) {
+        // pararBucle solo cambia el token, no interrumpe este cuerpo: sin volver a
+        // comprobarlo aqui, un parar o reiniciar que llega mientras el ciclo ya
+        // esta en marcha se honraria despues de haber reservado igualmente
+        if (!control.vigente(mia)) return;
+
         // se persiste antes de pulsar porque el clic navega y mata este script
         await guardarEstado({ fase: FASE.CONFIRM, reservando: { numtren: libre.numtren, at: Date.now() } });
         if (pulsarContinuar(libre.numtren)) return;

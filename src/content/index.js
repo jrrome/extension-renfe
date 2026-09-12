@@ -27,6 +27,12 @@ function avisar(tipo, datos) {
   chrome.runtime.sendMessage({ tipo, ...datos }).catch(() => {});
 }
 
+// pintar() y el callback de alCambiarEstado se lanzan sin esperar su resultado.
+// sin este catch un fallo ahi desaparece sin dejar rastro
+function alFallar(promesa) {
+  Promise.resolve(promesa).catch((e) => console.error("[bot renfe]", e));
+}
+
 // el refresco en sitio sustituye el tbody entero y se lleva por delante los
 // checkboxes inyectados, asi que hay que volver a ponerlos en cada repintado
 function vigilarRepintados(alRepintar) {
@@ -57,6 +63,11 @@ async function objetivoDeLaPagina(estado) {
   // una busqueda distinta invalida los trenes vigilados: los numeros de tren de
   // otra fecha no significan nada aqui
   if (existente && existente.fecha === fecha) return existente;
+
+  // el campo de fecha llega vacio en un repintado a medias de renfe. si ya hay un
+  // objetivo guardado, tratarlo como una busqueda nueva borraria fase, result y
+  // cycle por un instante sin datos reales, no por un cambio de busqueda de verdad
+  if (existente && fecha === "") return existente;
 
   const nuevo = { id: ID_OBJETIVO, fecha, flowToken: tokenDeFlujo(), trenes: [] };
 
@@ -163,21 +174,27 @@ async function enPaginaDeTrenes(estado) {
   montarCheckboxes(objetivo.trenes, alMarcar);
   vigilarRepintados(remontar);
 
-  // volvimos a la tabla con una reserva a medias: el tren se escapo entre el
-  // momento de verlo libre y el de pulsar
-  if (estado.fase === FASE.CONFIRM && estado.reservando) {
-    await guardarEstado({ fase: FASE.SCAN, reservando: null, errorStreak: estado.errorStreak + 1 });
-  }
+  // volvimos a la tabla con una reserva a medias: el tren se escapo entre el momento
+  // de verlo libre y el de pulsar. la condicion se mira dentro de la cola porque
+  // objetivoDeLaPagina puede haber limpiado la fase justo antes
+  await actualizarEstado((ahora) => {
+    if (ahora.fase !== FASE.CONFIRM || !ahora.reservando) return null;
+    return { fase: FASE.SCAN, reservando: null, errorStreak: ahora.errorStreak + 1 };
+  });
 
   // sin esto el panel se queda congelado con lo que hubiera al montarlo: el bucle
   // escribe el estado en cada paso pero nadie estaba escuchando esos cambios.
   // tambien es aqui donde se recrea el objetivo tras un reinicio del popup: ese
   // reinicio escribe el estado limpio directamente en chrome.storage, y este
   // suscriptor es lo primero que corre despues de esa escritura
-  alCambiarEstado(async () => {
-    await asegurarObjetivo();
-    await pintar();
-  });
+  alCambiarEstado(() =>
+    alFallar(
+      (async () => {
+        await asegurarObjetivo();
+        await pintar();
+      })()
+    )
+  );
 
   await pintar();
   const ahora = await leerEstado();
@@ -223,7 +240,7 @@ async function main() {
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.tipo === MSG.PARAR) {
     pararBucle();
-    guardarEstado({ running: false, fase: FASE.IDLE }).then(pintar);
+    alFallar(guardarEstado({ running: false, fase: FASE.IDLE }).then(pintar));
   }
 
   // el popup escribe el estado limpio por su cuenta. aqui solo se corta el bucle, sin
@@ -231,7 +248,7 @@ chrome.runtime.onMessage.addListener((msg) => {
   // escritura nuestra podria aterrizar despues de la suya y resucitar los targets
   if (msg?.tipo === MSG.REINICIAR) {
     pararBucle();
-    pintar();
+    alFallar(pintar());
   }
 });
 

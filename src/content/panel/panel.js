@@ -211,6 +211,9 @@ export function actualizarPanel(estado, objetivo) {
   principal.classList.toggle("parar", corriendo);
   principal.disabled = !corriendo && vigilados.length === 0;
 
+  // el panel vive en un shadow root: document.activeElement se queda en el host y
+  // nunca en el input de dentro, asi que la guarda tiene que mirar el activeElement
+  // del propio shadow root
   const intervalo = raiz.querySelector(".intervalo input");
-  if (document.activeElement !== intervalo) intervalo.value = estado.settings.intervalSec;
+  if (raiz.activeElement !== intervalo) intervalo.value = estado.settings.intervalSec;
 }

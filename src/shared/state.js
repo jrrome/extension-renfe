@@ -17,7 +17,17 @@ const AJUSTES_DEFECTO = { intervalSec: 5, maxErrorStreak: 5, debug: false };
 // el input del panel trae min y max, pero esos atributos no se aplican al leer .value:
 // borrar el campo da "" y Number("") es 0, que dejaria el bucle sin pausa ninguna
 const INTERVALO_MIN = 2;
-const INTERVALO_MAX = 60;
+export const INTERVALO_MAX = 60;
+
+// el watchdog del service worker mata el bucle si pasa este tiempo sin latido. vive
+// aqui, no en service_worker.js, porque ese archivo llama a chrome.alarms.create en
+// el ambito del modulo y no se puede importar bajo node para probarlo
+export const SIN_LATIDO_MS = 2 * 60 * 1000;
+
+// margen que se da a un ciclo, ademas del intervalo configurado, para el refresco de
+// la pagina. ver el test que comprueba que INTERVALO_MAX mas esto sigue cabiendo
+// dentro de SIN_LATIDO_MS: si deja de caber, el watchdog mataria un bucle sano
+export const MARGEN_REFRESCO_MS = 8000;
 
 export function normalizarIntervalo(valor) {
   const n = Math.round(Number(valor));

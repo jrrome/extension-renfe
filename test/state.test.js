@@ -8,6 +8,9 @@ import {
   FASE,
   REANUDAR_MAX_MS,
   CADUCIDAD_MS,
+  INTERVALO_MAX,
+  SIN_LATIDO_MS,
+  MARGEN_REFRESCO_MS,
 } from "../src/shared/state.js";
 
 test("un almacenamiento vacio produce un estado valido y parado", () => {
@@ -39,6 +42,15 @@ test("el intervalo vacio o absurdo cae al minimo en vez de dejar el bucle sin pa
 test("el intervalo se corta en 60 para no pasarse del watchdog de 2 minutos", () => {
   assert.equal(normalizarIntervalo(61), 60);
   assert.equal(normalizarIntervalo(200), 60);
+});
+
+test("el ciclo mas largo posible cabe dentro de la ventana del watchdog", () => {
+  const cicloMasLargoMs = INTERVALO_MAX * 1000 + MARGEN_REFRESCO_MS;
+  assert.ok(
+    cicloMasLargoMs < SIN_LATIDO_MS,
+    "si el intervalo maximo mas el margen de refresco no cabe en SIN_LATIDO_MS, " +
+      "el watchdog del service worker mataria un bucle que va bien, no uno atascado",
+  );
 });
 
 test("un intervalo razonable pasa entero y los decimales se redondean", () => {
