@@ -126,7 +126,11 @@ async function limpiar() {
 export function actualizarEstado(transformar) {
   return enCola(async () => {
     const actual = await leerEstado();
-    return fundirYGuardar(actual, transformar(actual));
+    const cambios = transformar(actual);
+    // sin cambios no hay nada que escribir: escribir igual despertaria a cada
+    // suscriptor de alCambiarEstado por un clic que no cambio nada
+    if (!cambios) return actual;
+    return fundirYGuardar(actual, cambios);
   });
 }
 

@@ -119,20 +119,23 @@ test("reiniciar deja el storage limpio y conserva los ajustes", async () => {
   assert.equal(estado.cycle, 0);
   assert.equal(estado.settings.intervalSec, 30);
   assert.equal(estado.settings.debug, true);
+  assert.equal(estado.actualizadoEn, null, "un estado recien reiniciado no tiene nada que caducar");
 });
 
 test("reiniciarEstado comparte la cola con guardarEstado", async () => {
   vaciar();
-  await guardarEstado({
-    targets: [{ id: "actual", fecha: "12/09/2026", trenes: [{ numtren: "09132", salida: "14.53" }] }],
-    activeTargetId: "actual",
-  });
-
-  await Promise.all([guardarEstado({ cycle: 99 }), reiniciarEstado()]);
+  await guardarEstado({ settings: { intervalSec: 7, maxErrorStreak: 5, debug: false } });
+  await Promise.all([
+    guardarEstado({ settings: { intervalSec: 42, maxErrorStreak: 5, debug: false } }),
+    reiniciarEstado(),
+  ]);
 
   const estado = await leerEstado();
-  assert.deepEqual(estado.targets, [], "el reinicio no se pierde entre medias");
-  assert.equal(estado.cycle, 0, "el reinicio deja el estado limpio, no lo que escribiera la otra escritura");
+  assert.equal(
+    estado.settings.intervalSec,
+    42,
+    "si la cola es una sola el reinicio lee la escritura de 42 y la conserva; con colas separadas leeria el 7 de antes",
+  );
 });
 
 test("un intervalo corrupto en el storage se acota al leerlo", async () => {

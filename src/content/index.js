@@ -56,7 +56,9 @@ async function objetivoDeLaPagina(estado) {
 async function alternarTren(numtren, salida, marcado) {
   await actualizarEstado((estado) => {
     const objetivo = objetivoActivo(estado);
-    if (!objetivo) return {};
+    // sin objetivo activo no hay nada que marcar: no devolver cambios evita
+    // una escritura vacia que despertaria a los suscriptores sin motivo
+    if (!objetivo) return null;
 
     const sinEl = objetivo.trenes.filter((t) => t.numtren !== numtren);
     const trenes = marcado ? [...sinEl, { numtren, salida }] : sinEl;
