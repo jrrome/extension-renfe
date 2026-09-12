@@ -52,10 +52,12 @@ export async function arrancarBucle() {
       const objetivo = objetivoActivo(estado);
       const vigilados = objetivo ? objetivo.trenes : [];
 
+      // quedarse sin trenes es una accion del usuario, no una incidencia: se para
+      // limpio y sin notificacion en vez de girar en vacio sin dar senales de vida
       if (vigilados.length === 0) {
-        await guardarEstado({ fase: FASE.WAIT });
-        await dormir(estado.settings.intervalSec * 1000, mia);
-        continue;
+        control.cancelar();
+        await guardarEstado({ running: false, fase: FASE.IDLE });
+        return;
       }
 
       await guardarEstado({ fase: FASE.SCAN });
