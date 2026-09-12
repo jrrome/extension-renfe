@@ -87,22 +87,47 @@ panel se quedaba congelado con lo que hubiera al montarlo, y el botón podía mo
 Si la fecha de la página cambia, o si los trenes vigilados dejan de aparecer en la tabla
 durante 3 ciclos, el bucle **para y lo dice** en vez de seguir girando en vacío.
 
-### Diagnóstico
+### Modo diagnóstico
 
-Cada ciclo deja un registro en la consola con el prefijo `[bot renfe]`: cuántos trenes
-hay en la tabla, cuáles se vigilan, cuáles de ellos están realmente presentes, la huella
-del contenido y el resultado del refresco. El panel muestra un resumen. Para volcarlo
-entero desde la consola de la pestaña:
+Por defecto el panel habla en corto: "Buscando plaza" en vez de las tres fases internas
+del ciclo, "ultimo intento hace 12 s" en vez del número de ciclo, y ningún volcado en
+consola. Es lo que le importa a quien solo quiere un asiento.
+
+El interruptor **Modo diagnostico** del popup enciende el resto: fases reales, contador
+de ciclos, cuántos trenes hay en la tabla, cuántos de los vigilados están presentes, el
+resultado del refresco, y una línea por ciclo en la consola con el prefijo `[bot renfe]`.
+
+El registro **se graba siempre**, esté encendido o no; lo que se apaga es la impresión.
+Así, cuando algo falle sin el debug puesto, sigue estando todo:
 
 ```js
 __botRenfeDiagnostico()
 ```
 
+### El estado caduca solo
+
+Una búsqueda real dura media hora; el estado guardado duraba para siempre. Ahora cada
+escritura deja un sello y `leerEstado` decide qué hacer con él:
+
+| Sin actividad | Qué pasa |
+|---|---|
+| menos de 1 h | nada: si quedó en marcha, se reanuda al volver a la tabla |
+| de 1 h a 24 h | deja de reanudarse sola, pero **conserva los trenes marcados** |
+| más de 24 h | se olvida todo menos el intervalo y el modo diagnóstico |
+
+El umbral corto es el que importa: sin él, abrir Renfe días después ponía la extensión a
+buscar —y a reservar— una búsqueda que ya no querías.
+
+El botón **↺** del panel (visible solo cuando no está buscando) y el **Reiniciar** del
+popup hacen lo mismo a mano. El del popup escribe el estado directamente, sin pasar por
+el content script, así que funciona desde cualquier pestaña: es la salida cuando algo se
+queda atascado y no estás en la página de trenes.
+
 ## Estructura
 
 ```
 src/shared/      selectors.js (todo el acoplamiento con el html de Renfe)
-                 state.js (chrome.storage) · messages.js
+                 state.js (chrome.storage, caducidad, reinicio) · textos.js · messages.js
 src/content/     index.js (entrada y máquina de estados) · loop.js (el bucle)
                  parseTrains.js · matchTrains.js · checkboxes.js · book.js
                  refresh/ (en sitio y por navegación) · panel/ (HUD) · pageScript.js
@@ -122,6 +147,10 @@ Cubren las funciones puras contra **HTML real** capturado de una sesión
 disponibilidad, emparejamiento de trenes vigilados, estado por defecto e inyección
 de checkboxes.
 
+También la caducidad del estado por sus dos umbrales, el reinicio, el acotado del
+intervalo, la serialización de escrituras (con un `chrome.storage` de mentira con retardo,
+que es lo que hace que la carrera se reproduzca) y el redactado de los dos modos.
+
 No están cubiertos por tests, y necesitan comprobación manual contra Renfe: el
 refresco real, la reserva de punta a punta, la detección de caída de sesión y la
 de captcha/clave SMS.
@@ -140,8 +169,11 @@ y abre `http://127.0.0.1:8771/dev/preview.html`, que lo pinta en sus distintos e
   páginas capturadas, así que esa ruta no se pudo verificar y se dejó fuera.
 - **Un solo objetivo.** Una fecha y un sentido a la vez. El estado ya es una lista
   de `targets` para poder añadir varios sin reescribirlo.
-- **Sin re-login automático.** Si Renfe cierra la sesión, la extensión pausa y avisa.
-  Al volver a una tabla de la misma búsqueda, reanuda sola.
+- **La caída de sesión se detecta tarde.** El content script solo se inyecta en
+  `venta.renfe.com/vol/*`, así que cuando Renfe te echa fuera no hay nadie escuchando.
+  Quien lo caza es el watchdog del service worker, a los 2 minutos sin señales de vida, y
+  lo hace como "pausado por errores", sin distinguir la causa. Detectarlo al momento
+  exigiría cargar la extensión en todas las páginas del dominio, y no compensa.
 - **La fecha que muestra el panel** sale de `#dateTrainList`. En las capturas ese campo
   trae la fecha de hoy mientras que el atributo `fecha=` de los enlaces dice otra cosa;
   queda por confirmar en uso real cuál refleja la búsqueda.
