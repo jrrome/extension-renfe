@@ -25,8 +25,9 @@ export const INTERVALO_MAX = 60;
 export const SIN_LATIDO_MS = 2 * 60 * 1000;
 
 // margen que se da a un ciclo, ademas del intervalo configurado, para el refresco de
-// la pagina. ver el test que comprueba que INTERVALO_MAX mas esto sigue cabiendo
-// dentro de SIN_LATIDO_MS: si deja de caber, el watchdog mataria un bucle sano
+// la pagina. hay un test que comprueba que el intervalo maximo mas este margen
+// siguen cabiendo en la ventana del watchdog: si dejan de caber, el watchdog
+// mataria un bucle perfectamente sano
 export const MARGEN_REFRESCO_MS = 8000;
 
 export function normalizarIntervalo(valor) {
