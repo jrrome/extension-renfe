@@ -1,5 +1,5 @@
 // registro por ciclo para poder ver donde se atasca el bucle sin tener que
-// adivinar. se imprime en consola y lo ultimo se muestra en el panel.
+// adivinar. lo ultimo se muestra en el panel; en consola solo con el debug puesto.
 const PREFIJO = "[bot renfe]";
 const MAXIMO = 40;
 
