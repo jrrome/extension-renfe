@@ -5,6 +5,14 @@ const MAXIMO = 40;
 
 const registro = [];
 
+// el buffer graba siempre; lo que se apaga es la impresion. asi volcado() sirve
+// despues del hecho aunque el debug estuviera apagado durante el fallo.
+let verboso = false;
+
+export function fijarVerboso(valor) {
+  verboso = Boolean(valor);
+}
+
 // huella del contenido de la tabla: si no cambia entre ciclos, el refresco es
 // falso por muy "ok" que diga
 export function huellaDeTabla(trenes) {
@@ -15,7 +23,7 @@ export function anotar(entrada) {
   const linea = { at: Date.now(), ...entrada };
   registro.push(linea);
   if (registro.length > MAXIMO) registro.shift();
-  console.log(PREFIJO, `ciclo ${linea.ciclo}`, linea);
+  if (verboso) console.log(PREFIJO, `ciclo ${linea.ciclo}`, linea);
   return linea;
 }
 
