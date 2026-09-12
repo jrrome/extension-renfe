@@ -107,22 +107,32 @@ function enCola(tarea) {
   return siguiente;
 }
 
-async function escribir(parcial) {
-  const actual = await leerEstado();
-  const siguiente = conDefectos({ ...actual, ...parcial, actualizadoEn: Date.now() });
+async function fundirYGuardar(actual, cambios) {
+  const siguiente = conDefectos({ ...actual, ...cambios, actualizadoEn: Date.now() });
   await chrome.storage.local.set({ [CLAVE]: siguiente });
   return siguiente;
 }
 
 async function limpiar() {
   const actual = await leerEstado();
-  const limpio = estadoReiniciado(actual);
+  const limpio = conDefectos(estadoReiniciado(actual));
   await chrome.storage.local.set({ [CLAVE]: limpio });
   return limpio;
 }
 
+// para los cambios que dependen del estado anterior la lectura tiene que ocurrir
+// dentro de la cola. con la lectura fuera, dos clics seguidos calculan desde la
+// misma foto y el segundo pisa al primero por mucho que las escrituras se ordenen.
+export function actualizarEstado(transformar) {
+  return enCola(async () => {
+    const actual = await leerEstado();
+    return fundirYGuardar(actual, transformar(actual));
+  });
+}
+
+// caso particular de actualizarEstado: el cambio no depende del estado anterior
 export function guardarEstado(parcial) {
-  return enCola(() => escribir(parcial));
+  return actualizarEstado(() => parcial);
 }
 
 // se escribe entero, no mezclado: reiniciar es sustituir el estado, no parchearlo
@@ -136,6 +146,6 @@ export function objetivoActivo(estado) {
 
 export function alCambiarEstado(callback) {
   chrome.storage.onChanged.addListener((cambios, area) => {
-    if (area === "local" && cambios[CLAVE]) callback(conDefectos(cambios[CLAVE].newValue));
+    if (area === "local" && cambios[CLAVE]) callback(caducar(conDefectos(cambios[CLAVE].newValue)));
   });
 }

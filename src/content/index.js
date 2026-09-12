@@ -1,5 +1,5 @@
 import { paginaActual, sesionViva, tokenDeFlujo, SEL } from "../shared/selectors.js";
-import { FASE, leerEstado, guardarEstado, objetivoActivo, alCambiarEstado } from "../shared/state.js";
+import { FASE, leerEstado, guardarEstado, actualizarEstado, objetivoActivo, alCambiarEstado } from "../shared/state.js";
 import { arrancarBucle, pararBucle } from "./loop.js";
 import { pulsarConfirmar, hayRetoDeSeguridad } from "./book.js";
 import { reenviarBusqueda } from "./refresh/byNavigation.js";
@@ -54,15 +54,16 @@ async function objetivoDeLaPagina(estado) {
 }
 
 async function alternarTren(numtren, salida, marcado) {
-  const estado = await leerEstado();
-  const objetivo = objetivoActivo(estado);
-  if (!objetivo) return;
+  await actualizarEstado((estado) => {
+    const objetivo = objetivoActivo(estado);
+    if (!objetivo) return {};
 
-  const sinEl = objetivo.trenes.filter((t) => t.numtren !== numtren);
-  objetivo.trenes = marcado ? [...sinEl, { numtren, salida }] : sinEl;
-  objetivo.trenes.sort((a, b) => a.salida.localeCompare(b.salida));
+    const sinEl = objetivo.trenes.filter((t) => t.numtren !== numtren);
+    const trenes = marcado ? [...sinEl, { numtren, salida }] : sinEl;
+    trenes.sort((a, b) => a.salida.localeCompare(b.salida));
 
-  await guardarEstado({ targets: [objetivo] });
+    return { targets: [{ ...objetivo, trenes }] };
+  });
 }
 
 async function alternarBusqueda() {

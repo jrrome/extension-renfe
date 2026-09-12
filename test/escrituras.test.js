@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-// un storage de mentira con retardo. el retardo es el que hace que las escrituras se
-// solapen de verdad: sin el, el test pasaria aunque la cola no existiera.
+// un storage de mentira con retardo. get ya es async, asi que el await cede el turno
+// y ambas lecturas verian el valor previo aunque el retardo fuera cero; el retardo
+// no crea el solape, solo lo agranda para que sea facil de reproducir en el test.
 const almacen = {};
 const RETARDO = 5;
 
@@ -11,18 +12,18 @@ globalThis.chrome = {
     local: {
       async get(clave) {
         await new Promise((r) => setTimeout(r, RETARDO));
-        return clave in almacen ? { [clave]: almacen[clave] } : {};
+        return clave in almacen ? { [clave]: structuredClone(almacen[clave]) } : {};
       },
       async set(obj) {
         await new Promise((r) => setTimeout(r, RETARDO));
-        Object.assign(almacen, obj);
+        Object.assign(almacen, structuredClone(obj));
       },
     },
     onChanged: { addListener() {} },
   },
 };
 
-const { leerEstado, guardarEstado, reiniciarEstado } = await import("../src/shared/state.js");
+const { leerEstado, guardarEstado, reiniciarEstado, actualizarEstado } = await import("../src/shared/state.js");
 
 function vaciar() {
   for (const k of Object.keys(almacen)) delete almacen[k];
@@ -37,7 +38,10 @@ test("dos escrituras solapadas no se pisan", async () => {
   assert.equal(estado.errorStreak, 3, "la segunda tambien");
 });
 
-test("marcar dos trenes seguidos conserva los dos", async () => {
+// esto no simula dos clics independientes: "dos" ya viene fundido a mano antes de
+// llamar. lo que de verdad comprueba es que una escritura de targets y otra de fase
+// no se pisan entre si
+test("escribir targets y escribir fase a la vez no se pisan", async () => {
   vaciar();
   const uno = { id: "actual", fecha: "12/09/2026", trenes: [{ numtren: "09132", salida: "14.53" }] };
   await guardarEstado({ targets: [uno], activeTargetId: "actual" });
@@ -48,6 +52,29 @@ test("marcar dos trenes seguidos conserva los dos", async () => {
   const estado = await leerEstado();
   assert.equal(estado.targets[0].trenes.length, 2);
   assert.equal(estado.fase, "SCAN");
+});
+
+// esto si simula dos clics independientes: cada llamada lee el estado por su cuenta
+// dentro de actualizarEstado y calcula su propio cambio, en vez de recibir el
+// resultado ya fundido como en el test de arriba
+test("dos actualizarEstado concurrentes que agregan trenes distintos conservan los dos", async () => {
+  vaciar();
+  const objetivo = { id: "actual", fecha: "12/09/2026", trenes: [] };
+  await guardarEstado({ targets: [objetivo], activeTargetId: "actual" });
+
+  function agregarTren(numtren, salida) {
+    return actualizarEstado((estado) => {
+      const actual = estado.targets[0];
+      const trenes = [...actual.trenes, { numtren, salida }];
+      trenes.sort((a, b) => a.salida.localeCompare(b.salida));
+      return { targets: [{ ...actual, trenes }] };
+    });
+  }
+
+  await Promise.all([agregarTren("09132", "14.53"), agregarTren("09140", "15.07")]);
+
+  const estado = await leerEstado();
+  assert.equal(estado.targets[0].trenes.length, 2, "los dos clics sobreviven");
 });
 
 test("cada escritura deja el estado sellado con la hora", async () => {
@@ -92,6 +119,20 @@ test("reiniciar deja el storage limpio y conserva los ajustes", async () => {
   assert.equal(estado.cycle, 0);
   assert.equal(estado.settings.intervalSec, 30);
   assert.equal(estado.settings.debug, true);
+});
+
+test("reiniciarEstado comparte la cola con guardarEstado", async () => {
+  vaciar();
+  await guardarEstado({
+    targets: [{ id: "actual", fecha: "12/09/2026", trenes: [{ numtren: "09132", salida: "14.53" }] }],
+    activeTargetId: "actual",
+  });
+
+  await Promise.all([guardarEstado({ cycle: 99 }), reiniciarEstado()]);
+
+  const estado = await leerEstado();
+  assert.deepEqual(estado.targets, [], "el reinicio no se pierde entre medias");
+  assert.equal(estado.cycle, 0, "el reinicio deja el estado limpio, no lo que escribiera la otra escritura");
 });
 
 test("un intervalo corrupto en el storage se acota al leerlo", async () => {
