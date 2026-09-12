@@ -6,10 +6,8 @@ const TEXTO_FASE = {
   [FASE.SCAN]: "Comprobando trenes",
   [FASE.WAIT]: "Esperando al siguiente intento",
   [FASE.REFRESH]: "Refrescando la busqueda",
-  [FASE.BOOK]: "Reservando",
   [FASE.CONFIRM]: "Confirmando la reserva",
   [FASE.DONE]: "Tren reservado",
-  [FASE.PAUSED_SESSION]: "Sesion de Renfe caida",
   [FASE.PAUSED_ERRORS]: "Pausado por errores",
   [FASE.PAUSED_CHALLENGE]: "Renfe pide verificacion",
 };

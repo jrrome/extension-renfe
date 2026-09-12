@@ -1,4 +1,4 @@
-import { paginaActual, sesionViva, tokenDeFlujo, SEL } from "../shared/selectors.js";
+import { paginaActual, tokenDeFlujo, SEL } from "../shared/selectors.js";
 import { FASE, leerEstado, guardarEstado, actualizarEstado, objetivoActivo, alCambiarEstado } from "../shared/state.js";
 import { arrancarBucle, pararBucle } from "./loop.js";
 import { pulsarConfirmar, hayRetoDeSeguridad } from "./book.js";
@@ -48,7 +48,7 @@ async function objetivoDeLaPagina(estado) {
   // otra fecha no significan nada aqui
   if (existente && existente.fecha === fecha) return existente;
 
-  const nuevo = { id: ID_OBJETIVO, fecha, flowToken: tokenDeFlujo(), trenes: [], enabled: true };
+  const nuevo = { id: ID_OBJETIVO, fecha, flowToken: tokenDeFlujo(), trenes: [] };
   await guardarEstado({ targets: [nuevo], activeTargetId: ID_OBJETIVO });
   return nuevo;
 }
@@ -115,11 +115,6 @@ async function enPaginaDeTrenes(estado) {
     await guardarEstado({ fase: FASE.SCAN, reservando: null, errorStreak: estado.errorStreak + 1 });
   }
 
-  // la sesion volvio y estamos en la misma busqueda: se reanuda solo
-  if (estado.fase === FASE.PAUSED_SESSION && objetivo.trenes.length > 0) {
-    await guardarEstado({ running: true, fase: FASE.SCAN, flowToken: tokenDeFlujo() });
-  }
-
   // sin esto el panel se queda congelado con lo que hubiera al montarlo: el bucle
   // escribe el estado en cada paso pero nadie estaba escuchando esos cambios
   alCambiarEstado(() => pintar());
@@ -131,15 +126,6 @@ async function enPaginaDeTrenes(estado) {
 
 async function main() {
   const estado = await leerEstado();
-
-  if (!sesionViva()) {
-    if (estado.running) {
-      pararBucle();
-      await guardarEstado({ running: false, fase: FASE.PAUSED_SESSION });
-      avisar(MSG.NOTIFICAR_PAUSA, { fase: FASE.PAUSED_SESSION, motivo: "Renfe ha cerrado la sesion" });
-    }
-    return;
-  }
 
   switch (paginaActual()) {
     case "COMPRADO":

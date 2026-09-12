@@ -78,16 +78,13 @@ const TEXTO_FASE = {
   [FASE.SCAN]: "Comprobando trenes",
   [FASE.WAIT]: "Esperando",
   [FASE.REFRESH]: "Refrescando busqueda",
-  [FASE.BOOK]: "Reservando",
   [FASE.CONFIRM]: "Confirmando reserva",
   [FASE.DONE]: "Reservado",
-  [FASE.PAUSED_SESSION]: "Sesion caida",
   [FASE.PAUSED_ERRORS]: "Pausado por errores",
   [FASE.PAUSED_CHALLENGE]: "Verificacion de Renfe",
 };
 
 const AVISOS = {
-  [FASE.PAUSED_SESSION]: "Renfe ha cerrado la sesion. Vuelve a entrar y repite la busqueda.",
   [FASE.PAUSED_ERRORS]: "Demasiados ciclos fallidos seguidos. Revisa la pagina y reanuda.",
   [FASE.PAUSED_CHALLENGE]: "Renfe pide una verificacion. Resuelvela tu y reanuda.",
 };

@@ -1,8 +1,6 @@
 // todo el acoplamiento con el html de renfe vive aqui. verificado contra capturas
 // reales de una sesion del 2026-08-27 guardadas en ../../html
 
-export const URL_VOL = "https://venta.renfe.com/vol/";
-
 export const PAGINA = {
   ABONOS: "myPassesCard.do",
   FORMULARIO: "journeyFormalization.do",
@@ -30,10 +28,6 @@ export function paginaActual(href = location.href) {
   if (href.includes(PAGINA.FORMULARIO)) return "FORMULARIO";
   if (href.includes(PAGINA.ABONOS)) return "ABONOS";
   return "OTRA";
-}
-
-export function sesionViva(href = location.href) {
-  return href.startsWith(URL_VOL);
 }
 
 export function tokenDeFlujo(doc = document) {
