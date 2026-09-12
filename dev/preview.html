@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8"><title>preview panel</title>
 <style>
 body { margin:0; background:#e9e4ec; font-family:-apple-system,sans-serif; }
-.escena { position:relative; height:330px; border-bottom:1px solid #cbc0d0; padding:10px 14px; }
+.escena { position:relative; height:400px; border-bottom:1px solid #cbc0d0; padding:10px 14px; }
 .escena h2 { margin:0; font-size:12px; color:#6b1f7c; text-transform:uppercase; letter-spacing:.6px; }
 #renfebot-panel { display:none; }
 .slot { position:absolute; right:16px; bottom:16px; }
@@ -13,17 +13,28 @@ body { margin:0; background:#e9e4ec; font-family:-apple-system,sans-serif; }
 import { montarPanel, actualizarPanel } from "../src/content/panel/panel.js";
 import { FASE, estadoInicial } from "../src/shared/state.js";
 
+const AJUSTES = { intervalSec: 5, maxErrorStreak: 5, debug: false };
+const VIGILADOS = { trenes: [
+  { numtren: "09132", salida: "14.53" },
+  { numtren: "09140", salida: "15.07" },
+  { numtren: "12554", salida: "17.20" },
+] };
+const BUSCANDO = {
+  fase: FASE.REFRESH, running: true, cycle: 37, lastCycleAt: Date.now() - 12000,
+  ultimoDiagnostico: { enTabla: 18, vigilados: 3, vigiladosPresentes: 3, refresco: "onSelect" },
+};
+
 const CASOS = [
-  ["Parado, sin trenes marcados", { fase: FASE.IDLE }, { trenes: [] }],
-  ["Buscando (todo normal)", { fase: FASE.SCAN, running: true, cycle: 37, lastCycleAt: Date.now(),
-     ultimoDiagnostico: { enTabla: 18, vigilados: 3, vigiladosPresentes: 3, refresco: "onSelect" } },
-    { trenes: [{numtren:"09132",salida:"14.53"},{numtren:"09140",salida:"15.07"},{numtren:"12554",salida:"17.20"}] }],
+  ["Parado, sin trenes marcados", { fase: FASE.IDLE, settings: AJUSTES }, { trenes: [] }],
+  ["Buscando \u2014 modo normal", { ...BUSCANDO, settings: AJUSTES }, VIGILADOS],
+  ["Buscando \u2014 modo debug", { ...BUSCANDO, settings: { ...AJUSTES, debug: true } }, VIGILADOS],
   ["Parado porque los vigilados desaparecieron", { fase: FASE.PAUSED_ERRORS, cycle: 22, lastCycleAt: Date.now(),
+     settings: AJUSTES,
      lastError: "Los 2 tren(es) que vigilas ya no estan en la tabla. Rehaz la busqueda y vuelve a marcarlos.",
      ultimoDiagnostico: { enTabla: 5, vigilados: 2, vigiladosPresentes: 0, refresco: "renfe no repinto las filas" } },
-    { trenes: [{numtren:"09132",salida:"14.53"}] }],
-  ["Reservado", { fase: FASE.DONE, cycle: 88, lastCycleAt: Date.now(), result:{numtren:"09140"} },
-    { trenes: [{numtren:"09140",salida:"15.07"}] }],
+    { trenes: [{ numtren: "09132", salida: "14.53" }] }],
+  ["Reservado", { fase: FASE.DONE, cycle: 88, lastCycleAt: Date.now(), settings: AJUSTES, result: { numtren: "09140" } },
+    { trenes: [{ numtren: "09140", salida: "15.07" }] }],
 ];
 
 const cont = document.getElementById("escenas");
