@@ -1,11 +1,21 @@
 import { paginaActual, tokenDeFlujo, SEL } from "../shared/selectors.js";
-import { FASE, leerEstado, guardarEstado, actualizarEstado, objetivoActivo, alCambiarEstado } from "../shared/state.js";
+import {
+  FASE,
+  leerEstado,
+  guardarEstado,
+  actualizarEstado,
+  reiniciarEstado,
+  normalizarIntervalo,
+  objetivoActivo,
+  alCambiarEstado,
+} from "../shared/state.js";
 import { arrancarBucle, pararBucle } from "./loop.js";
 import { pulsarConfirmar, hayRetoDeSeguridad } from "./book.js";
 import { reenviarBusqueda } from "./refresh/byNavigation.js";
 import { montarCheckboxes, sincronizarCheckboxes } from "./checkboxes.js";
 import { MSG } from "../shared/messages.js";
 import { montarPanel, actualizarPanel } from "./panel/panel.js";
+import { fijarVerboso } from "./diagnostico.js";
 
 const ID_OBJETIVO = "actual";
 
@@ -49,7 +59,23 @@ async function objetivoDeLaPagina(estado) {
   if (existente && existente.fecha === fecha) return existente;
 
   const nuevo = { id: ID_OBJETIVO, fecha, flowToken: tokenDeFlujo(), trenes: [] };
-  await guardarEstado({ targets: [nuevo], activeTargetId: ID_OBJETIVO });
+
+  // la busqueda es otra: la fase, el resultado y el diagnostico de la anterior ya no
+  // describen nada de esta pagina, y si no se limpian el panel sigue anunciando el
+  // tren que reservaste ayer
+  await guardarEstado({
+    targets: [nuevo],
+    activeTargetId: ID_OBJETIVO,
+    running: false,
+    fase: FASE.IDLE,
+    cycle: 0,
+    errorStreak: 0,
+    lastCycleAt: null,
+    reservando: null,
+    lastError: null,
+    ultimoDiagnostico: null,
+    result: null,
+  });
   return nuevo;
 }
 
@@ -68,22 +94,33 @@ async function alternarTren(numtren, salida, marcado) {
   });
 }
 
+// la decision de arrancar o parar depende del estado leido, asi que tiene que
+// tomarse dentro de la cola de escritura junto con el guardado; arrancarBucle y
+// pararBucle quedan fuera de la transformacion porque son efectos secundarios y
+// una transformacion tiene que ser pura
 async function alternarBusqueda() {
-  const estado = await leerEstado();
-  if (estado.running) {
-    pararBucle();
-    await guardarEstado({ running: false, fase: FASE.IDLE });
-    return;
-  }
-  const objetivo = objetivoActivo(estado);
-  if (!objetivo || objetivo.trenes.length === 0) return;
+  let accion = null;
 
-  await guardarEstado({ running: true, fase: FASE.SCAN, cycle: 0, errorStreak: 0, result: null, lastError: null });
-  arrancarBucle();
+  await actualizarEstado((estado) => {
+    if (estado.running) {
+      accion = "detener";
+      return { running: false, fase: FASE.IDLE };
+    }
+
+    const objetivo = objetivoActivo(estado);
+    if (!objetivo || objetivo.trenes.length === 0) return null;
+
+    accion = "arrancar";
+    return { running: true, fase: FASE.SCAN, cycle: 0, errorStreak: 0, result: null, lastError: null };
+  });
+
+  if (accion === "detener") pararBucle();
+  if (accion === "arrancar") arrancarBucle();
 }
 
 async function pintar() {
   const estado = await leerEstado();
+  fijarVerboso(estado.settings.debug);
   actualizarPanel(estado, objetivoActivo(estado));
   sincronizarCheckboxes(objetivoActivo(estado)?.trenes || []);
 }
@@ -92,10 +129,15 @@ async function enPaginaDeTrenes(estado) {
   montarPanel({
     alPulsarPrincipal: alternarBusqueda,
     alQuitarTren: (numtren) => alternarTren(numtren, "", false).then(pintar),
-    alCambiarIntervalo: async (segundos) => {
-      const actual = await leerEstado();
-      await guardarEstado({ settings: { ...actual.settings, intervalSec: segundos } });
+    alReiniciar: async () => {
+      pararBucle();
+      await reiniciarEstado();
+      await pintar();
     },
+    alCambiarIntervalo: (segundos) =>
+      actualizarEstado((actual) => ({
+        settings: { ...actual.settings, intervalSec: normalizarIntervalo(segundos) },
+      })),
   });
 
   const objetivo = await objetivoDeLaPagina(estado);
@@ -164,6 +206,14 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.tipo === MSG.PARAR) {
     pararBucle();
     guardarEstado({ running: false, fase: FASE.IDLE }).then(pintar);
+  }
+
+  // el popup escribe el estado limpio por su cuenta. aqui solo se corta el bucle, sin
+  // escribir: las colas de escritura de los dos contextos son independientes y una
+  // escritura nuestra podria aterrizar despues de la suya y resucitar los targets
+  if (msg?.tipo === MSG.REINICIAR) {
+    pararBucle();
+    pintar();
   }
 });
 
