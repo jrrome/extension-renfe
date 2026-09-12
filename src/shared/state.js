@@ -16,6 +16,17 @@ const CLAVE = "estado";
 
 const AJUSTES_DEFECTO = { intervalSec: 5, maxErrorStreak: 5 };
 
+// el input del panel trae min y max, pero esos atributos no se aplican al leer .value:
+// borrar el campo da "" y Number("") es 0, que dejaria el bucle sin pausa ninguna
+const INTERVALO_MIN = 2;
+const INTERVALO_MAX = 60;
+
+export function normalizarIntervalo(valor) {
+  const n = Math.round(Number(valor));
+  if (!Number.isFinite(n)) return INTERVALO_MIN;
+  return Math.min(INTERVALO_MAX, Math.max(INTERVALO_MIN, n));
+}
+
 export function estadoInicial() {
   return {
     version: VERSION,
