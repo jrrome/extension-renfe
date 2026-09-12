@@ -52,6 +52,28 @@ export function estadoReiniciado(actual) {
   return { ...base, settings: { ...base.settings, ...(actual?.settings || {}) } };
 }
 
+// dos relojes, no uno. el corto evita lo peligroso: que al abrir renfe dias despues
+// rearranque sola una busqueda vieja y reserve algo que ya no quieres. el largo cumple
+// el encargo de olvidarlo todo. entre medias se conservan los trenes marcados porque
+// re-marcarlos a mano es justo la molestia que no aporta nada.
+export const REANUDAR_MAX_MS = 60 * 60 * 1000;
+export const CADUCIDAD_MS = 24 * 60 * 60 * 1000;
+
+export function caducar(estado, ahora = Date.now()) {
+  if (!estado.actualizadoEn) return estado;
+
+  const inactivo = ahora - estado.actualizadoEn;
+  if (inactivo >= CADUCIDAD_MS) return estadoReiniciado(estado);
+
+  // no se toca actualizadoEn: el reloj de 24 h sigue corriendo y volver a aplicar
+  // esto no cambia nada, que es lo que la hace segura de llamar en cada lectura
+  if (inactivo >= REANUDAR_MAX_MS && (estado.running || estado.reservando)) {
+    return { ...estado, running: false, fase: FASE.IDLE, reservando: null };
+  }
+
+  return estado;
+}
+
 export function conDefectos(guardado) {
   const base = estadoInicial();
   if (!guardado || typeof guardado !== "object") return base;

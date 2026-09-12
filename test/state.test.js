@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { conDefectos, normalizarIntervalo, estadoReiniciado, FASE } from "../src/shared/state.js";
+import { conDefectos, normalizarIntervalo, estadoReiniciado, caducar, FASE } from "../src/shared/state.js";
 
 test("un almacenamiento vacio produce un estado valido y parado", () => {
   const estado = conDefectos(undefined);
@@ -71,4 +71,61 @@ test("reiniciar conserva los ajustes y borra todo lo demas", () => {
 test("reiniciar sobre un estado sin ajustes no revienta", () => {
   assert.equal(estadoReiniciado({}).settings.intervalSec, 5);
   assert.equal(estadoReiniciado(undefined).settings.intervalSec, 5);
+});
+
+const HORA = 60 * 60 * 1000;
+const AHORA = 1757680000000;
+
+function estadoBuscando(actualizadoEn) {
+  return {
+    ...conDefectos(undefined),
+    running: true,
+    fase: FASE.WAIT,
+    cycle: 42,
+    actualizadoEn,
+    reservando: { numtren: "09132", at: actualizadoEn },
+    targets: [{ id: "actual", fecha: "12/09/2026", trenes: [{ numtren: "09132", salida: "14.53" }] }],
+    activeTargetId: "actual",
+    settings: { intervalSec: 12, maxErrorStreak: 5, debug: false },
+  };
+}
+
+test("un estado recien tocado no caduca", () => {
+  const estado = estadoBuscando(AHORA - 5 * 60 * 1000);
+  assert.deepEqual(caducar(estado, AHORA), estado);
+});
+
+test("un estado sin sello no caduca nunca", () => {
+  const estado = { ...estadoBuscando(null) };
+  assert.deepEqual(caducar(estado, AHORA), estado);
+});
+
+test("pasada una hora deja de reanudar solo pero conserva los trenes marcados", () => {
+  const salida = caducar(estadoBuscando(AHORA - 2 * HORA), AHORA);
+  assert.equal(salida.running, false, "no debe rearrancar una busqueda vieja por su cuenta");
+  assert.equal(salida.fase, FASE.IDLE);
+  assert.equal(salida.reservando, null, "una reserva a medias de hace dos horas ya no significa nada");
+  assert.equal(salida.targets[0].trenes.length, 1, "los trenes marcados se conservan");
+  assert.equal(salida.cycle, 42, "el ciclo se conserva hasta las 24 h");
+});
+
+test("pasadas 24 horas se olvida todo menos los ajustes", () => {
+  const salida = caducar(estadoBuscando(AHORA - 25 * HORA), AHORA);
+  assert.deepEqual(salida.targets, []);
+  assert.equal(salida.cycle, 0);
+  assert.equal(salida.running, false);
+  assert.equal(salida.actualizadoEn, null);
+  assert.equal(salida.settings.intervalSec, 12, "los ajustes sobreviven");
+});
+
+test("pasadas 24 horas limpia aunque no estuviera buscando", () => {
+  const parado = { ...estadoBuscando(AHORA - 25 * HORA), running: false, fase: FASE.DONE };
+  assert.deepEqual(caducar(parado, AHORA).targets, []);
+});
+
+test("aplicar la caducidad dos veces da lo mismo que aplicarla una", () => {
+  for (const edad of [2 * HORA, 25 * HORA]) {
+    const una = caducar(estadoBuscando(AHORA - edad), AHORA);
+    assert.deepEqual(caducar(una, AHORA), una, `edad ${edad}`);
+  }
 });
