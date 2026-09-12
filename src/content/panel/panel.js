@@ -1,4 +1,5 @@
 import { FASE } from "../../shared/state.js";
+import { textoDeFase, haceCuanto } from "../../shared/textos.js";
 
 const ID_HOST = "renfebot-panel";
 
@@ -73,17 +74,6 @@ const ESTILOS = `
 }
 `;
 
-const TEXTO_FASE = {
-  [FASE.IDLE]: "Parado",
-  [FASE.SCAN]: "Comprobando trenes",
-  [FASE.WAIT]: "Esperando",
-  [FASE.REFRESH]: "Refrescando busqueda",
-  [FASE.CONFIRM]: "Confirmando reserva",
-  [FASE.DONE]: "Reservado",
-  [FASE.PAUSED_ERRORS]: "Pausado por errores",
-  [FASE.PAUSED_CHALLENGE]: "Verificacion de Renfe",
-};
-
 const AVISOS = {
   [FASE.PAUSED_ERRORS]: "Demasiados ciclos fallidos seguidos. Revisa la pagina y reanuda.",
   [FASE.PAUSED_CHALLENGE]: "Renfe pide una verificacion. Resuelvela tu y reanuda.",
@@ -91,6 +81,8 @@ const AVISOS = {
 
 let raiz = null;
 let acciones = {};
+let ultimoEstado = null;
+let ticker = null;
 
 export function montarPanel(manejadores) {
   acciones = manejadores;
@@ -107,6 +99,7 @@ export function montarPanel(manejadores) {
       <header class="cab">
         <span class="punto"></span>
         <h1>Bot Renfe</h1>
+        <button class="reiniciar" title="borrar los trenes marcados y empezar de cero">↺</button>
         <button class="minimizar" title="minimizar">–</button>
       </header>
       <div class="cuerpo">
@@ -119,7 +112,7 @@ export function montarPanel(manejadores) {
         <ul class="lista"></ul>
         <div class="pie">
           <button class="principal">Buscar</button>
-          <label class="intervalo">cada <input type="number" min="2" max="120" value="5"> s</label>
+          <label class="intervalo">cada <input type="number" min="2" max="60" value="5"> s</label>
         </div>
       </div>
     </section>`;
@@ -127,10 +120,36 @@ export function montarPanel(manejadores) {
   raiz.querySelector(".minimizar").addEventListener("click", () => {
     raiz.querySelector(".panel").classList.toggle("min");
   });
+  raiz.querySelector(".reiniciar").addEventListener("click", () => acciones.alReiniciar?.());
   raiz.querySelector(".principal").addEventListener("click", () => acciones.alPulsarPrincipal?.());
   raiz.querySelector(".intervalo input").addEventListener("change", (e) => {
     acciones.alCambiarIntervalo?.(Number(e.target.value));
   });
+
+  // "hace 12 s" tiene que envejecer y el panel solo repinta cuando cambia el estado:
+  // con un intervalo largo el usuario se quedaria mirando un valor congelado
+  if (ticker) clearInterval(ticker);
+  ticker = setInterval(pintarMeta, 5000);
+}
+
+function pintarMeta() {
+  if (!raiz || !ultimoEstado) return;
+  const estado = ultimoEstado;
+  const meta = raiz.querySelector(".estado .meta");
+
+  if (!estado.running && !estado.cycle) {
+    meta.innerHTML = "";
+    return;
+  }
+
+  if (estado.settings.debug) {
+    const hora = estado.lastCycleAt ? new Date(estado.lastCycleAt).toLocaleTimeString("es-ES") : "-";
+    meta.innerHTML = `ciclo ${estado.cycle}<br>${hora}`;
+    return;
+  }
+
+  const cuanto = haceCuanto(estado.lastCycleAt);
+  meta.innerHTML = cuanto ? `ultimo intento<br>${cuanto}` : "";
 }
 
 export function actualizarPanel(estado, objetivo) {
@@ -139,15 +158,15 @@ export function actualizarPanel(estado, objetivo) {
   const corriendo = estado.running;
   const pausado = String(estado.fase).startsWith("PAUSED");
   const vigilados = objetivo?.trenes || [];
+  const debug = Boolean(estado.settings.debug);
 
   const logrado = estado.fase === FASE.DONE;
   const punto = raiz.querySelector(".punto");
   punto.className = `punto${corriendo ? " on" : ""}${pausado ? " err" : ""}${logrado ? " ok" : ""}`;
 
-  raiz.querySelector(".estado .txt").textContent = TEXTO_FASE[estado.fase] || estado.fase;
-  raiz.querySelector(".estado .meta").innerHTML = corriendo || estado.cycle
-    ? `ciclo ${estado.cycle}<br>${estado.lastCycleAt ? new Date(estado.lastCycleAt).toLocaleTimeString("es-ES") : "-"}`
-    : "";
+  raiz.querySelector(".estado .txt").textContent = textoDeFase(estado.fase, debug);
+  ultimoEstado = estado;
+  pintarMeta();
 
   const zona = raiz.querySelector(".zona-aviso");
   // lastError trae el motivo concreto (que trenes, que fechas); el texto generico
@@ -159,7 +178,7 @@ export function actualizarPanel(estado, objetivo) {
 
   const diag = raiz.querySelector(".zona-diag");
   const d = estado.ultimoDiagnostico;
-  if (d && (corriendo || pausado)) {
+  if (debug && d && (corriendo || pausado)) {
     const faltan = d.vigilados > 0 && d.vigiladosPresentes < d.vigilados;
     diag.innerHTML = `<p class="diag">
       <b>${d.enTabla}</b> trenes en la tabla ·
@@ -179,6 +198,10 @@ export function actualizarPanel(estado, objetivo) {
   lista.querySelectorAll("button").forEach((b) => {
     b.addEventListener("click", () => acciones.alQuitarTren?.(b.dataset.num));
   });
+
+  // mientras busca ya tienes Parar; que convivan los dos invita al clic equivocado,
+  // y el reinicio esta pegado a minimizar
+  raiz.querySelector(".reiniciar").hidden = corriendo;
 
   const principal = raiz.querySelector(".principal");
   principal.textContent = corriendo ? "Parar" : "Buscar";
