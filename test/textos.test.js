@@ -19,13 +19,24 @@ test("confirmar se simplifica pero las pausas dicen lo mismo en ambos modos", ()
   assert.equal(textoDeFase(FASE.CONFIRM, false), "Reservando");
   assert.equal(textoDeFase(FASE.CONFIRM, true), "Confirmando reserva");
 
-  for (const fase of [FASE.IDLE, FASE.DONE, FASE.PAUSED_ERRORS, FASE.PAUSED_CHALLENGE]) {
-    assert.equal(textoDeFase(fase, false), textoDeFase(fase, true), fase);
+  // comprobar solo que los dos modos coinciden no basta: como salen del mismo mapa,
+  // una errata en el texto coincidiria en ambos y el test seguiria en verde
+  const COMPARTIDOS = {
+    [FASE.IDLE]: "Parado",
+    [FASE.DONE]: "Reservado",
+    [FASE.PAUSED_ERRORS]: "Pausado por errores",
+    [FASE.PAUSED_CHALLENGE]: "Verificacion de Renfe",
+  };
+
+  for (const [fase, texto] of Object.entries(COMPARTIDOS)) {
+    assert.equal(textoDeFase(fase, false), texto, fase);
+    assert.equal(textoDeFase(fase, true), texto, fase);
   }
 });
 
 test("una fase desconocida se muestra tal cual en vez de desaparecer", () => {
   assert.equal(textoDeFase("RARA", false), "RARA");
+  assert.equal(textoDeFase("RARA", true), "RARA");
 });
 
 test("haceCuanto sin sello no dice nada", () => {
