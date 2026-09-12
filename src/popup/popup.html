@@ -26,7 +26,18 @@
     </p>
   </section>
 
-  <button id="parar" class="parar" hidden>Parar la busqueda</button>
+  <section class="ajustes">
+    <label class="conmutador">
+      <input type="checkbox" id="debug">
+      Modo diagnostico
+    </label>
+    <p class="nota">Muestra ciclos, estado de la tabla y registro en la consola.</p>
+  </section>
+
+  <div class="acciones">
+    <button id="parar" class="parar" hidden>Parar la busqueda</button>
+    <button id="reiniciar" class="reiniciar">Reiniciar</button>
+  </div>
   <script type="module" src="popup.js"></script>
 </body>
 </html>
