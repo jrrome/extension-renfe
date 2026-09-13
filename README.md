@@ -11,6 +11,26 @@ contraseña ni guarda credenciales: trabaja sobre la sesión que ya tienes abier
 2. Activa **Modo de desarrollador**.
 3. **Cargar descomprimida** y elige esta carpeta.
 
+Para pasársela a alguien, `INSTALL.md` son las mismas instrucciones escritas para quien
+la recibe en vez de para quien la desarrolla, y viaja dentro del zip.
+
+## Empaquetar
+
+```bash
+./empaquetar.sh
+```
+
+Deja en `dist/` un zip con lo único que Chrome necesita: el manifest, los iconos, `src/`
+y el `INSTALL.md`. Fuera quedan `node_modules`, los tests, la página de previsualización
+y la configuración de npm — 27 MB de carpeta se convierten en 36 KB de zip.
+
+Corre los tests antes y aborta si fallan, y después comprueba que en el paquete están
+todas las rutas que el manifest referencia. Una ruta rota ahí solo se nota al cargar la
+extensión, que ya es tarde.
+
+El zip contiene una carpeta con nombre, no los archivos sueltos: quien lo descomprime se
+encuentra algo que puede elegir directamente en Chrome.
+
 ## Uso
 
 1. Inicia sesión en `venta.renfe.com`.
