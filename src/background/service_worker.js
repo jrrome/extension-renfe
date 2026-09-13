@@ -3,10 +3,16 @@ import { MSG } from "../shared/messages.js";
 
 const ALARMA_VIGILANCIA = "vigilancia";
 
-const ICONO = "icons/icon128.png";
+// getURL y no una ruta relativa: este script vive en src/background/, y ahi una
+// ruta relativa se resuelve contra la carpeta del worker, no contra la raiz de la
+// extension. chrome no encontraba el icono y notifications.create rechazaba entera,
+// asi que no es que saliera sin icono: no salia ninguna notificacion.
+const ICONO = chrome.runtime.getURL("icons/icon128.png");
 
 function notificar(titulo, mensaje) {
-  chrome.notifications.create({ type: "basic", iconUrl: ICONO, title: titulo, message: mensaje, priority: 2 });
+  chrome.notifications
+    .create({ type: "basic", iconUrl: ICONO, title: titulo, message: mensaje, priority: 2 })
+    .catch((e) => console.error("[bot renfe] no se pudo notificar:", e));
 }
 
 async function pintarBadge() {
