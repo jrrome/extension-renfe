@@ -1,4 +1,4 @@
-import { leerEstado, actualizarEstado, reiniciarEstado, objetivoActivo, alCambiarEstado } from "../shared/state.js";
+import { FASE, leerEstado, actualizarEstado, reiniciarEstado, objetivoActivo, alCambiarEstado } from "../shared/state.js";
 import { textoDeFase } from "../shared/textos.js";
 import { MSG } from "../shared/messages.js";
 
@@ -21,14 +21,14 @@ function pintar(estado) {
   document.getElementById("debug").checked = debug;
 }
 
-async function pestanaActiva() {
-  const [pestana] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return pestana || null;
+async function avisarPestanasRenfe(tipo) {
+  const pestanas = await chrome.tabs.query({ url: "https://venta.renfe.com/*" });
+  await Promise.allSettled(pestanas.map((pestana) => chrome.tabs.sendMessage(pestana.id, { tipo })));
 }
 
 document.getElementById("parar").addEventListener("click", async () => {
-  const pestana = await pestanaActiva();
-  if (pestana) chrome.tabs.sendMessage(pestana.id, { tipo: MSG.PARAR }).catch(() => {});
+  await avisarPestanasRenfe(MSG.PARAR);
+  await actualizarEstado(() => ({ running: false, fase: FASE.IDLE, reservando: null }));
 });
 
 // se avisa antes de escribir para que el bucle corte ya, sin esperar al siguiente
@@ -36,8 +36,7 @@ document.getElementById("parar").addEventListener("click", async () => {
 // script no escribe en el storage: si escribiera, esa escritura podria aterrizar
 // despues de la de aqui abajo y resucitar los targets que el reinicio acaba de borrar
 document.getElementById("reiniciar").addEventListener("click", async () => {
-  const pestana = await pestanaActiva();
-  if (pestana) chrome.tabs.sendMessage(pestana.id, { tipo: MSG.REINICIAR }).catch(() => {});
+  await avisarPestanasRenfe(MSG.REINICIAR);
   await reiniciarEstado();
 });
 

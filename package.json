@@ -5,9 +5,13 @@
   "type": "module",
   "description": "Extension de Chrome que reserva plazas de abono en Renfe",
   "scripts": {
-    "test": "node --test 'test/**/*.test.js'"
+    "test": "node --test test/*.test.js",
+    "package": "bash ./empaquetar.sh"
   },
   "devDependencies": {
     "jsdom": "^30.0.1"
+  },
+  "engines": {
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   }
 }

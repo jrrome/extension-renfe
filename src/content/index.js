@@ -126,14 +126,14 @@ async function alternarBusqueda() {
   await actualizarEstado((estado) => {
     if (estado.running) {
       accion = "detener";
-      return { running: false, fase: FASE.IDLE };
+      return { running: false, fase: FASE.IDLE, reservando: null };
     }
 
     const objetivo = objetivoActivo(estado);
     if (!objetivo || objetivo.trenes.length === 0) return null;
 
     accion = "arrancar";
-    return { running: true, fase: FASE.SCAN, cycle: 0, errorStreak: 0, result: null, lastError: null };
+    return { running: true, fase: FASE.SCAN, cycle: 0, errorStreak: 0, lastCycleAt: Date.now(), result: null, lastError: null };
   });
 
   if (accion === "detener") pararBucle();
@@ -187,14 +187,15 @@ async function enPaginaDeTrenes(estado) {
   // tambien es aqui donde se recrea el objetivo tras un reinicio del popup: ese
   // reinicio escribe el estado limpio directamente en chrome.storage, y este
   // suscriptor es lo primero que corre despues de esa escritura
-  alCambiarEstado(() =>
+  alCambiarEstado((cambiado) => {
+    if (!cambiado.running) pararBucle();
     alFallar(
       (async () => {
         await asegurarObjetivo();
         await pintar();
       })()
-    )
-  );
+    );
+  });
 
   await pintar();
   const ahora = await leerEstado();
@@ -240,7 +241,7 @@ async function main() {
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.tipo === MSG.PARAR) {
     pararBucle();
-    alFallar(guardarEstado({ running: false, fase: FASE.IDLE }).then(pintar));
+    alFallar(guardarEstado({ running: false, fase: FASE.IDLE, reservando: null }).then(pintar));
   }
 
   // el popup escribe el estado limpio por su cuenta. aqui solo se corta el bucle, sin

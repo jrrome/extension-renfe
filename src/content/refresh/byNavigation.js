@@ -14,19 +14,32 @@ export function volverAlFormulario({ tiempoEsperaMs = 6000 } = {}) {
   const volver = document.querySelector(SEL.botonVolver);
   if (!volver) return Promise.resolve({ ok: false, motivo: "no existe #botonVolver" });
 
-  const urlAntes = location.href;
-  volver.click();
+  const urlAntes = location.href.split("#")[0];
 
   return new Promise((resolve) => {
     const inicio = Date.now();
+    let timer;
+    let terminado = false;
+    const terminar = (resultado) => {
+      if (terminado) return;
+      terminado = true;
+      clearTimeout(timer);
+      window.removeEventListener("pagehide", alSalir);
+      resolve(resultado);
+    };
+    const alSalir = () => terminar({ ok: true });
+    window.addEventListener("pagehide", alSalir, { once: true });
+    volver.click();
     const revisar = () => {
-      if (document.visibilityState === "hidden" || location.href !== urlAntes) {
-        return resolve({ ok: true });
+      if (terminado) return;
+      // una pestana en segundo plano y un cambio de # no son navegaciones.
+      if (location.href.split("#")[0] !== urlAntes) {
+        return terminar({ ok: true });
       }
-      if (Date.now() - inicio > tiempoEsperaMs) {
-        return resolve({ ok: false, motivo: "se pulso volver pero la pagina no navego" });
+      if (Date.now() - inicio >= tiempoEsperaMs) {
+        return terminar({ ok: false, motivo: "se pulso volver pero la pagina no navego" });
       }
-      setTimeout(revisar, 200);
+      timer = setTimeout(revisar, 200);
     };
     revisar();
   });

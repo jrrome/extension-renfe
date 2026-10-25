@@ -10,7 +10,8 @@ Ni te los pide ni los guarda. Trabaja sobre la sesión de Renfe que tú ya tenga
 en el navegador: primero entras tú en tu cuenta como siempre, y a partir de ahí la
 extensión solo mira la tabla de trenes y pulsa los botones que pulsarías tú.
 
-Tampoco manda nada a ningún sitio. Todo ocurre dentro de tu navegador.
+No incorpora analítica ni servidores propios. Las consultas y acciones de reserva
+se realizan en la web de Renfe desde tu navegador.
 
 ## Instalación
 
@@ -29,10 +30,8 @@ Ya está. Debería aparecerte el icono en la barra de extensiones.
 y lee de ahí cada vez que abres el navegador. Si mueves la carpeta, le cambias el nombre
 o vacías Descargas, la extensión deja de funcionar. Por eso el paso 2.
 
-**Chrome te va a dar la lata.** Cada vez que abras el navegador te saldrá un aviso del
-tipo *"Desactiva las extensiones en modo de desarrollador"*. No es que algo vaya mal: es
-lo que Chrome hace siempre con cualquier extensión que no venga de su tienda. Le das a
-cerrar y sigues. Volverá a salir mañana.
+Chrome puede mostrar avisos por utilizar una extensión cargada en modo de desarrollador.
+Puedes comprobar su estado en `chrome://extensions`.
 
 ## Cómo se usa
 
@@ -55,7 +54,7 @@ Deja esa pestaña abierta. Si la cierras, deja de buscar.
   te lo dice en el panel. La resuelves tú y vuelves a darle a buscar.
 - **No reserva nada que tú no hayas marcado.**
 - **No funciona con abonos ilimitados**, solo con los que te hacen elegir tren.
-- Solo actúa en la página de resultados de trenes. En cualquier otra no hace nada.
+- Inicia la búsqueda en el listado de trenes y continúa en los pasos de formalización.
 
 ## Si algo se queda raro
 
@@ -78,7 +77,7 @@ vuelve a provocar el problema: el panel pasa a enseñar detalles técnicos y la 
 del navegador guarda un registro de cada intento.
 
 Para copiarlo: en la pestaña de Renfe, clic derecho → Inspeccionar → pestaña Consola, y
-escribe:
+selecciona el contexto de ejecución de Bot Renfe y escribe:
 
 ```
 __botRenfeDiagnostico()

@@ -115,6 +115,11 @@ export async function arrancarBucle() {
 
         // se persiste antes de pulsar porque el clic navega y mata este script
         await guardarEstado({ fase: FASE.CONFIRM, reservando: { numtren: libre.numtren, at: Date.now() } });
+        // parar o reiniciar puede llegar durante la escritura anterior, incluso
+        // desde el popup. comprobar tambien el estado compartido antes del clic.
+        if (!control.vigente(mia)) return;
+        const actual = await leerEstado();
+        if (!control.vigente(mia) || !actual.running || actual.fase !== FASE.CONFIRM) return;
         if (pulsarContinuar(libre.numtren)) return;
         await guardarEstado({ fase: FASE.SCAN, reservando: null, errorStreak: estado.errorStreak + 1 });
       }
