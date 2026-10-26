@@ -12,7 +12,7 @@ test("las tres fases del ciclo son una sola cosa para el usuario", () => {
 test("en modo debug cada fase dice su nombre tecnico", () => {
   assert.equal(textoDeFase(FASE.SCAN, true), "Comprobando trenes");
   assert.equal(textoDeFase(FASE.WAIT, true), "Esperando");
-  assert.equal(textoDeFase(FASE.REFRESH, true), "Refrescando busqueda");
+  assert.equal(textoDeFase(FASE.REFRESH, true), "Refrescando búsqueda");
 });
 
 test("confirmar se simplifica pero las pausas dicen lo mismo en ambos modos", () => {
@@ -25,7 +25,7 @@ test("confirmar se simplifica pero las pausas dicen lo mismo en ambos modos", ()
     [FASE.IDLE]: "Parado",
     [FASE.DONE]: "Reservado",
     [FASE.PAUSED_ERRORS]: "Pausado por errores",
-    [FASE.PAUSED_CHALLENGE]: "Verificacion de Renfe",
+    [FASE.PAUSED_CHALLENGE]: "Verificación de Renfe",
   };
 
   for (const [fase, texto] of Object.entries(COMPARTIDOS)) {

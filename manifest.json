@@ -3,8 +3,14 @@
   "name": "Bot Renfe",
   "version": "1.0.0",
   "description": "Vigila los trenes que elijas en tu abono de Renfe y los reserva en cuanto quede plaza.",
-  "permissions": ["storage", "notifications", "alarms"],
-  "host_permissions": ["https://venta.renfe.com/*"],
+  "permissions": [
+    "storage",
+    "notifications",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://venta.renfe.com/*"
+  ],
   "background": {
     "service_worker": "src/background/service_worker.js",
     "type": "module"
@@ -26,8 +32,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://venta.renfe.com/vol/*"],
-      "js": ["src/content/boot.js"],
+      "matches": [
+        "https://venta.renfe.com/vol/*"
+      ],
+      "js": [
+        "src/content/boot.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -37,9 +47,13 @@
         "src/content/*.js",
         "src/content/refresh/*.js",
         "src/content/panel/*.js",
-        "src/shared/*.js"
+        "src/shared/*.js",
+        "src/shared/ui.css",
+        "src/shared/fonts/*.woff2"
       ],
-      "matches": ["https://venta.renfe.com/*"]
+      "matches": [
+        "https://venta.renfe.com/*"
+      ]
     }
   ]
 }

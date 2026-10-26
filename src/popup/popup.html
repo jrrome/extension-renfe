@@ -1,43 +1,11 @@
 <!doctype html>
 <html lang="es">
-<head><meta charset="utf-8"><link rel="stylesheet" href="popup.css"></head>
-<body>
-  <header>
-    <span class="punto" id="punto"></span>
-    <h1>Bot Renfe</h1>
-  </header>
-
-  <section class="estado">
-    <p class="fase" id="fase">Parado</p>
-    <p class="detalle" id="detalle"></p>
-  </section>
-
-  <section class="pasos">
-    <h2>Como se usa</h2>
-    <ol>
-      <li>Inicia sesion en <b>venta.renfe.com</b>.</li>
-      <li>Entra en tu abono, pulsa <b>nueva formalizacion</b> y elige sentido y fecha.</li>
-      <li>Con la <b>tabla de trenes</b> delante, marca las casillas de los trenes que quieras.</li>
-      <li>Pulsa <b>Buscar</b> en el panel de abajo a la derecha.</li>
-    </ol>
-    <p class="nota">
-      La extension solo funciona en la pagina de resultados de trenes. Puedes marcar y
-      desmarcar trenes mientras busca.
-    </p>
-  </section>
-
-  <section class="ajustes">
-    <label class="conmutador">
-      <input type="checkbox" id="debug">
-      Modo diagnostico
-    </label>
-    <p class="nota">Muestra ciclos, estado de la tabla y registro en la consola.</p>
-  </section>
-
-  <div class="acciones">
-    <button id="parar" class="parar" hidden>Parar la busqueda</button>
-    <button id="reiniciar" class="reiniciar">Reiniciar</button>
-  </div>
-  <script type="module" src="popup.js"></script>
-</body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bot Renfe</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body><main id="app"></main><script type="module" src="popup.js"></script></body>
 </html>

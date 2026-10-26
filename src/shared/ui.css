@@ -1,0 +1,107 @@
+/* Material común: gris neutro, superficies blancas y luz desde arriba. */
+.br-ui {
+  --ink: #555; --muted: #8a8a8a; --accent: #7f93ee;
+  --canvas: #efefef; --surface: #fff;
+  --lift: 0 6px 12px #0000000b, 0 1px 3px #00000005, inset 0 1px 2px #fff;
+  --inset: inset 2px 3px 6px #00000009, inset -2px -2px 5px #ffffffa6;
+  box-sizing: border-box; padding: 22px; color: var(--ink);
+  background: linear-gradient(155deg, #f6f6f6, var(--canvas));
+  font: 13px/1.5 "Bot Renfe Inter", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased; color-scheme: light;
+}
+.br-ui *, .br-ui *::before, .br-ui *::after { box-sizing: border-box; }
+.br-ui.floating { position: fixed; right: 20px; bottom: 20px; z-index: 2147483647; width: 344px; max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); overflow: auto; border: 1.5px solid #fff; border-radius: 30px; box-shadow: 0 16px 35px #0000000b, 0 -2px 6px #ffffffd9; }
+.br-ui.popup { width: 360px; max-height: 600px; overflow: auto; }
+.br-ui :where(button, input) { font: inherit; }
+.br-ui button { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: box-shadow .16s ease, transform .16s ease, color .16s ease; }
+.br-ui svg { display: block; flex: none; }
+.br-ui button:active:not(:disabled) { transform: translateY(1px); }
+.br-ui button:focus-visible, .br-ui input:focus-visible, .br-ui summary:focus-visible { outline: 2px solid #96a5ed; outline-offset: 4px; }
+.br-ui [hidden] { display: none !important; }
+.ui-header { display: flex; align-items: center; gap: 10px; margin-bottom: 23px; min-height: 34px; }
+.ui-brand { display: grid; place-items: center; width: 32px; color: #666; }
+.ui-brand svg { width: 32px; height: 32px; }
+.ui-header h1 { flex: 1; margin: 0; font-size: 17px; font-weight: 550; letter-spacing: -.6px; }
+.ui-tools { display: flex; align-items: center; gap: 8px; }
+.ui-icon-button { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; color: #999; border: 1px solid #fff; border-radius: 50%; background: var(--surface); box-shadow: var(--lift); }
+.ui-icon-button:hover { color: #686868; box-shadow: 0 5px 12px #00000013, inset 0 1px 1px #fff; }
+.ui-status-row { display: flex; align-items: center; justify-content: space-between; gap: 9px; margin-bottom: 24px; }
+/* La cápsula permanece blanca. El color vive en el disco y en el texto. */
+.ui-status-pill {
+  --status: #b9c2bd; --status-top: #cbd3ce; --status-bottom: #adb9b1;
+  display: inline-flex; align-items: center; gap: .42em; max-width: 235px;
+  padding: .59em .78em; min-height: 2.68em; border: .045em solid #fff; border-radius: 999px;
+  background: linear-gradient(160deg, #ffffffc7 0%, #f4f4f49c 55%, #ffffffde 100%);
+  color: var(--status); font-size: 14px; line-height: 1.2;
+  box-shadow: inset 0 1px 2px #fff, inset 0 -3px 6px #ffffff59, 0 5px 11px #00000004, 0 -2px 5px #ffffff85;
+}
+.ui-status-icon {
+  display: grid; place-items: center; flex: none; width: 1.12em; height: 1.12em;
+  border-radius: 50%; color: #fff;
+  background: radial-gradient(ellipse at 30% 15%, #ffffff4d, transparent 63%), linear-gradient(150deg, var(--status-top), var(--status-bottom));
+  box-shadow: inset 0 1px 2px #ffffff8c, inset 0 -1px 2px #00000008, 0 1px 3px #00000008;
+}
+.ui-status-icon svg { width: 66%; height: 66%; filter: drop-shadow(0 1px 1px #ffffff1a); }
+.ui-status-text { font: inherit; font-weight: 500; letter-spacing: -.025em; }
+.ui-status-pill[data-tone="running"], .ui-status-pill[data-tone="confirming"] { --status: #8298f5; --status-top: #a2b2ff; --status-bottom: #7690f2; }
+.ui-status-pill[data-tone="done"] { --status: #74d990; --status-top: #8be9a4; --status-bottom: #68d286; }
+.ui-status-pill[data-tone="challenge"] { --status: #efc639; --status-top: #ffdf65; --status-bottom: #f2c82d; }
+.ui-status-pill[data-tone="error"] { --status: #f18f96; --status-top: #ffa5ac; --status-bottom: #ef838b; }
+.ui-timer { display: inline-flex; align-items: center; gap: 5px; color: #a5a5a5; font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ui-timer svg { color: #b6b6b6; }
+.ui-alert { display: flex; align-items: flex-start; gap: 9px; margin: -8px 0 21px; color: #888; font-size: 12px; line-height: 1.6; }
+.ui-alert svg { margin-top: 1px; color: #d6bd6b; }
+.ui-alert.success svg { color: #74d990; }
+.ui-alert p { margin: 0; overflow-wrap: anywhere; }
+.ui-section-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
+.ui-section-title h2 { margin: 0; color: #8a8a8a; font-size: 10px; font-weight: 500; letter-spacing: .65px; text-transform: uppercase; }
+.ui-date { color: #999; font-size: 11px; font-variant-numeric: tabular-nums; }
+.ui-selection { margin-bottom: 19px; padding: 6px; border-radius: 22px; background: #eaeaea; box-shadow: var(--inset); }
+.ui-list { list-style: none; padding: 0; margin: 0; max-height: 192px; overflow: auto; }
+.ui-list li { display: flex; align-items: center; gap: 12px; min-height: 46px; margin-bottom: 6px; padding: 9px 12px 9px 16px; border: 1px solid #fff; border-radius: 16px; background: var(--surface); box-shadow: var(--lift); }
+.ui-list li:last-child { margin-bottom: 0; }
+.ui-train-time { color: #5d5d5d; font-size: 15px; font-weight: 500; letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+.ui-train-number { flex: 1; color: #a0a0a0; font-size: 11px; font-variant-numeric: tabular-nums; }
+.ui-remove { display: grid; place-items: center; width: 23px; height: 23px; padding: 0; color: #b2b2b2; border: 0; border-radius: 50%; background: none; }
+.ui-remove:hover { color: #e98c95; background: #fafafa; }
+.ui-empty { margin: 0; padding: 19px 16px; text-align: center; color: #999; font-size: 12px; line-height: 1.7; }
+.ui-action-dock { display: grid; grid-template-columns: 108px minmax(0, 1fr); align-items: center; gap: 8px; padding: 6px; border: 1px solid #fff; border-radius: 23px; background: #fff; box-shadow: var(--lift); }
+.ui-interval-row { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; margin: 0; }
+.ui-interval-label { color: #aaa; font-size: 10px; line-height: 1.2; }
+.ui-stepper { display: flex; align-items: center; gap: 3px; padding: 4px; border-radius: 999px; background: #e9e9e9; box-shadow: var(--inset); }
+.ui-stepper button { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid #fff; border-radius: 50%; color: #aaa; background: var(--surface); box-shadow: 0 2px 5px #0000000a; }
+.ui-stepper button:disabled { opacity: .35; cursor: default; box-shadow: none; }
+.ui-stepper label { display: flex; align-items: baseline; justify-content: center; gap: 2px; width: 39px; color: #999; font-size: 11px; }
+.ui-stepper input { width: 22px; padding: 0; border: 0; outline: none; background: none; color: #696969; text-align: center; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; appearance: textfield; -moz-appearance: textfield; }
+.ui-stepper input::-webkit-inner-spin-button, .ui-stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ui-primary {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 64px;
+  padding: 12px 8px; border: 1.5px solid #fffffff2; border-radius: 18px; color: #fff; font-size: 13px; font-weight: 500; letter-spacing: -.4px;
+  /* Atardecer: albaricoque, coral y ciruela. */
+  background: radial-gradient(ellipse at 90% -15%, #fffffff2 0%, #ffffffb3 14%, transparent 49%), radial-gradient(ellipse at 0% 5%, #ffd286 0%, #ffc69eb3 34%, transparent 68%), radial-gradient(ellipse at 106% 100%, #bea3df 0%, transparent 62%), linear-gradient(175deg, #ffd2a1 0%, #efa2a8 38%, #bf7eaf 64%, #9465ad 100%);
+  box-shadow: 0 7px 16px #ad739c30, inset 0 2px 3px #ffffff6b, inset 0 -2px 4px #7777770c;
+  text-shadow: 0 1px 2px #635f9a33;
+}
+.ui-primary:hover:not(:disabled) { box-shadow: 0 9px 20px #ad739c40, inset 0 2px 3px #ffffffa6; }
+/* Rubor: rosa coral claro, con el texto y el icono en granate. */
+.ui-primary.stop { color: #8d4156; background: radial-gradient(ellipse at 90% -15%, #fffffff2 0%, #ffffffb3 14%, transparent 49%), radial-gradient(ellipse at 0% 0%, #fff4ec 0%, transparent 68%), linear-gradient(155deg, #ffe5df 0%, #f8cad1 52%, #efb0c3 100%); box-shadow: 0 7px 16px #dba5b426, inset 0 2px 3px #ffffff6b, inset 0 -2px 4px #7777770c; text-shadow: none; }
+.ui-primary.stop:hover { box-shadow: 0 9px 20px #dba5b436, inset 0 2px 3px #ffffff80; }
+.ui-primary:disabled { color: #b6b6b6; background: #ececec; box-shadow: var(--inset); text-shadow: none; cursor: not-allowed; }
+.ui-options { margin-top: 19px; }
+.ui-options > summary { display: flex; align-items: center; gap: 7px; min-height: 23px; color: #a3a3a3; font-size: 11px; cursor: pointer; list-style: none; }
+.ui-options > summary::-webkit-details-marker { display: none; }
+.ui-options .chevron { margin-left: auto; transition: transform .15s ease; }
+.ui-options[open] .chevron { transform: rotate(180deg); }
+.ui-options-body { padding-top: 15px; }
+.ui-debug-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #929292; font-size: 12px; cursor: pointer; }
+.ui-switch { appearance: none; width: 35px; height: 22px; flex: none; position: relative; margin: 0; border: 1px solid #e4e4e4; border-radius: 999px; background: #e5e5e5; box-shadow: var(--inset); cursor: pointer; }
+.ui-switch::before { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 2px 3px #00000014; transition: transform .15s ease; }
+.ui-switch:checked { background: #a6b5f1; border-color: #a6b5f1; }
+.ui-switch:checked::before { transform: translateX(13px); }
+.ui-diagnostic { margin-top: 13px; padding: 10px 12px; border-radius: 16px; color: #999; background: #eaeaea; box-shadow: var(--inset); font-size: 10px; line-height: 1.8; overflow-wrap: anywhere; }
+.ui-help { margin: 15px 0 0; padding: 15px 0 0; border-top: 1px solid #e3e3e3; color: #999; font-size: 11px; line-height: 1.8; }
+.ui-help b { color: #7a7a7a; font-weight: 500; }
+.br-ui.min .ui-content { display: none; }
+.br-ui.min .ui-header { margin-bottom: 0; }
+@media (max-width: 390px) { .br-ui.floating { right: 12px; bottom: 12px; padding: 19px; } }
+@media (prefers-reduced-motion: reduce) { .br-ui *, .br-ui *::before { transition: none !important; } }

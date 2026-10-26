@@ -1,53 +1,48 @@
 import { FASE, leerEstado, actualizarEstado, reiniciarEstado, objetivoActivo, alCambiarEstado } from "../shared/state.js";
-import { textoDeFase } from "../shared/textos.js";
 import { MSG } from "../shared/messages.js";
+import { crearInterfaz, conectarInterfaz, pintarInterfaz, actualizarTemporizador } from "../shared/ui.js";
 
-function pintar(estado) {
-  const objetivo = objetivoActivo(estado);
-  const pausado = String(estado.fase).startsWith("PAUSED");
-  const debug = estado.settings.debug;
-
-  document.getElementById("punto").className = `punto${estado.running ? " on" : ""}${pausado ? " err" : ""}`;
-  document.getElementById("fase").textContent = textoDeFase(estado.fase, debug);
-
-  const partes = [];
-  if (objetivo?.fecha) partes.push(objetivo.fecha);
-  if (objetivo?.trenes.length) partes.push(`${objetivo.trenes.length} tren(es) vigilados`);
-  if (debug && estado.running) partes.push(`ciclo ${estado.cycle}`);
-  if (estado.lastError) partes.push(estado.lastError);
-  document.getElementById("detalle").textContent = partes.join(" · ");
-
-  document.getElementById("parar").hidden = !estado.running;
-  document.getElementById("debug").checked = debug;
-}
+const app = document.getElementById("app");
+app.innerHTML = crearInterfaz({ popup: true });
 
 async function avisarPestanasRenfe(tipo) {
   const pestanas = await chrome.tabs.query({ url: "https://venta.renfe.com/*" });
   await Promise.allSettled(pestanas.map((pestana) => chrome.tabs.sendMessage(pestana.id, { tipo })));
 }
 
-document.getElementById("parar").addEventListener("click", async () => {
-  await avisarPestanasRenfe(MSG.PARAR);
-  await actualizarEstado(() => ({ running: false, fase: FASE.IDLE, reservando: null }));
+conectarInterfaz(app, {
+  async alParar() {
+    await avisarPestanasRenfe(MSG.PARAR);
+    await actualizarEstado(() => ({ running: false, fase: FASE.IDLE, reservando: null }));
+  },
+  async alReiniciar() {
+    await avisarPestanasRenfe(MSG.REINICIAR);
+    await reiniciarEstado();
+  },
+  async alAbrir() {
+    const pestanas = await chrome.tabs.query({ url: "https://venta.renfe.com/vol/*" });
+    const pestana = pestanas.find(p => p.active) || pestanas[0];
+    if (pestana) {
+      await chrome.tabs.update(pestana.id, { active: true });
+      if (pestana.windowId !== undefined) await chrome.windows.update(pestana.windowId, { focused: true });
+    } else {
+      await chrome.tabs.create({ url: "https://venta.renfe.com/vol/myPassesCard.do" });
+    }
+  },
+  alCambiarIntervalo: intervalSec => actualizarEstado(estado => ({ settings: { ...estado.settings, intervalSec } })),
+  alCambiarDiagnostico: debug => actualizarEstado(estado => ({ settings: { ...estado.settings, debug } })),
+  alQuitarTren: numero => actualizarEstado(estado => {
+    const objetivo = objetivoActivo(estado);
+    if (!objetivo) return null;
+    const trenes = objetivo.trenes.filter(tren => tren.numtren !== numero);
+    return {
+      targets: estado.targets.map(t => t.id === objetivo.id ? { ...t, trenes } : t),
+      ...(trenes.length ? {} : { running: false, fase: FASE.IDLE, reservando: null }),
+    };
+  }),
 });
 
-// se avisa antes de escribir para que el bucle corte ya, sin esperar al siguiente
-// ciclo. es un mensaje de reinicio y no el de parar porque su handler en el content
-// script no escribe en el storage: si escribiera, esa escritura podria aterrizar
-// despues de la de aqui abajo y resucitar los targets que el reinicio acaba de borrar
-document.getElementById("reiniciar").addEventListener("click", async () => {
-  await avisarPestanasRenfe(MSG.REINICIAR);
-  await reiniciarEstado();
-});
-
-// actualizarEstado lee el estado actual dentro de su propia cola de escritura, asi
-// que el resto de settings (por ejemplo intervalSec) nunca se pisan con una foto
-// vieja. tambien evita que el marcado del usuario compita consigo mismo: pintar
-// solo vuelve a fijar "checked" cuando la escritura ya aterrizo en el storage
-document.getElementById("debug").addEventListener("change", (e) => {
-  const marcado = e.target.checked;
-  actualizarEstado((estado) => ({ settings: { ...estado.settings, debug: marcado } }));
-});
-
+const pintar = estado => pintarInterfaz(app, estado, objetivoActivo(estado));
 leerEstado().then(pintar);
 alCambiarEstado(pintar);
+document.defaultView.setInterval(() => actualizarTemporizador(app), 1000);

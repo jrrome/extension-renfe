@@ -4,9 +4,9 @@ Vigila los trenes que elijas en tu abono de Renfe e intenta formalizar la reserv
 
 **Manifest V3 · JavaScript sin compilación · Sin servidor propio**
 
-![Panel de Bot Renfe: selección de trenes, búsqueda, reserva, diagnóstico y verificación](docs/images/paneles.png)
+![Bot Renfe: selección y búsqueda en el panel y el popup](docs/images/interfaz.png)
 
-*Captura de la interfaz real en la [vista previa local](dev/preview.html), con datos de ejemplo. El estado «Reservado» es una demostración visual.*
+*Componentes reales en la [vista previa local](dev/showcase.html), con datos de ejemplo.*
 
 ## Qué puedes hacer
 
@@ -14,7 +14,7 @@ Vigila los trenes que elijas en tu abono de Renfe e intenta formalizar la reserv
 - Buscar plaza con un intervalo configurable entre 2 y 60 segundos.
 - Cambiar los trenes vigilados mientras la búsqueda está en marcha.
 - Recibir una notificación cuando se confirma una reserva o se pausa la búsqueda.
-- Parar o reiniciar desde el popup, aunque tengas otra pestaña activa.
+- Quitar trenes, ajustar el intervalo, parar o reiniciar desde el popup, aunque tengas otra pestaña activa.
 - Activar el modo diagnóstico para consultar ciclos, refrescos y errores.
 
 Proyecto independiente, sin afiliación con Renfe. Adaptación a extensión del [bot de escritorio](https://github.com/jrrome/botRenfe).
@@ -43,14 +43,14 @@ La [guía de instalación](INSTALL.md) incluye instrucciones para quien recibe e
 1. Inicia sesión en [venta.renfe.com](https://venta.renfe.com/).
 2. Entra en tu abono, pulsa **Nueva formalización** y elige sentido y fecha.
 3. En la tabla de trenes, marca las casillas de los viajes que te valgan.
-4. Pulsa **Buscar** en el panel de abajo a la derecha.
+4. Pulsa **Buscar plaza** en el panel de abajo a la derecha.
 5. Deja abierta esa pestaña. Cuando se confirme una reserva, revisa el resultado en Renfe.
 
 La extensión puede pulsar tanto **Continuar** como la confirmación final. Si varios trenes vigilados tienen plaza, intenta reservar el primero que aparece en la tabla. Solo admite una búsqueda de fecha y sentido a la vez; usa una sola pestaña de formalización.
 
-Si Renfe pide un captcha o una clave SMS visible, la búsqueda se pausa: resuelve la verificación y reanuda. El botón **↺** del panel y **Reiniciar** del popup borran la selección y conservan tus ajustes.
+Si Renfe pide un captcha o una clave SMS visible, la búsqueda se pausa: resuelve la verificación y pulsa **Reanudar**. El botón circular de reinicio de ambas interfaces borra la selección y conserva tus ajustes. El diagnóstico y las instrucciones están en **Opciones y ayuda**.
 
-<img src="docs/images/popup.png" alt="Popup de Bot Renfe con estado, instrucciones, modo diagnóstico y botones para parar y reiniciar" width="360">
+<img src="docs/images/popup.png" alt="Popup de Bot Renfe con estado, trenes seleccionados, intervalo y parada" width="360">
 
 *Popup real con almacenamiento simulado para la captura.*
 
@@ -93,8 +93,10 @@ python3 -m http.server 8771 --bind 127.0.0.1
 
 - [Galería del panel](http://127.0.0.1:8771/dev/preview.html).
 - [Popup de ejemplo](http://127.0.0.1:8771/dev/popup.html).
+- [Panel y popup juntos](http://127.0.0.1:8771/dev/showcase.html).
+- [Componentes de estado ampliados](http://127.0.0.1:8771/dev/components.html).
 
-Ambas páginas usan los componentes reales con datos de ejemplo; no necesitan sesión ni realizan reservas. Las capturas del README están en `docs/images/`.
+Las páginas usan los componentes reales con datos de ejemplo; no necesitan sesión ni realizan reservas. Las capturas del README están en `docs/images/`, incluidas la [galería de estados](docs/images/paneles.png) y la [vista ampliada de las pills](docs/images/componentes.png). El estado «Reservado» de esas vistas es una demostración visual.
 
 ### Estructura
 
@@ -102,14 +104,18 @@ Ambas páginas usan los componentes reales con datos de ejemplo; no necesitan se
 manifest.json        Configuración de la extensión y permisos
 src/background/      Notificaciones, badge y vigilancia del bucle
 src/content/         Lectura de trenes, selección, refresco, reserva y panel
-src/popup/           Estado, instrucciones, diagnóstico, parada y reinicio
-src/shared/          Estado, selectores, mensajes y textos
+src/popup/           Controles del popup y navegación a Renfe
+src/shared/          Componentes, estilos, iconos, estado, selectores y mensajes
 test/               Pruebas y fragmentos HTML de la tabla de Renfe
 dev/                Vistas previas locales
 docs/               Capturas y documentación técnica
 ```
 
 Consulta la [arquitectura y el diagnóstico](docs/arquitectura.md) para entender el ciclo de búsqueda y cómo depurarlo.
+
+El [sistema de interfaz compartido](docs/ui.md) mantiene el mismo layout, jerarquía y controles en el panel y el popup. La marca original está disponible en [SVG](icons/bot-renfe.svg); los iconos de interfaz de Lucide se incluyen localmente con su [licencia](src/shared/lucide.LICENSE). La tipografía Inter también se incluye localmente con su [licencia OFL](src/shared/fonts/OFL.txt).
+
+Las acciones principales usan el degradado **Atardecer** (albaricoque, coral y ciruela); la parada usa **Rubor**, un degradado rosa coral claro con texto granate.
 
 ## Pruebas y limitaciones
 

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="../icons/icon32.png">
+  <title>Bot Renfe · panel y popup</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #eee; color: #606060; font: 14px/1.5 "Bot Renfe Inter", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+    main { width: 1200px; max-width: 100%; margin: auto; padding: 46px 44px 40px; }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 34px; }
+    header img { width: 42px; height: 42px; }
+    h1 { margin: 0; font-size: 27px; font-weight: 550; letter-spacing: -.9px; }
+    header p { margin: 3px 0 0; font-size: 12px; color: #817b8b; }
+    .surfaces { display: grid; grid-template-columns: 344px 344px 360px; gap: 32px; align-items: start; }
+    h2 { margin: 0 0 17px 5px; color: #817b8b; font-size: 12px; font-weight: 450; }
+    iframe { display: block; width: 360px; height: 470px; border: 0; outline: 1px solid #fff; border-radius: 30px; box-shadow: 0 16px 35px #0000000b, 0 -2px 6px #ffffffd9; }
+    footer { margin-top: 32px; color: #8b8593; font-size: 11px; }
+    #renfebot-panel { display: none; }
+    @media (max-width: 1150px) { .surfaces { grid-template-columns: 344px; justify-content: center; } }
+  </style>
+</head>
+<body>
+<main>
+  <header><img src="../icons/bot-renfe.svg" alt=""><div><h1>Bot Renfe</h1><p>Panel y popup · una misma interfaz</p></div></header>
+  <div class="surfaces">
+    <article><h2>Panel · selección</h2><div id="seleccion"></div></article>
+    <article><h2>Panel · buscando plaza</h2><div id="busqueda"></div></article>
+    <article><h2>Popup · buscando plaza</h2><iframe title="Popup de Bot Renfe"></iframe></article>
+  </div>
+  <footer>Componentes reales de la extensión con datos de ejemplo.</footer>
+</main>
+<script type="module">
+import { estadoInicial, FASE } from "../src/shared/state.js";
+import { montarPopupDemo } from "./popup-preview.js?v=3";
+
+const objetivo = { id: "demo", fecha: "26/10/2026", trenes: [
+  { numtren: "09132", salida: "14.53" },
+  { numtren: "09140", salida: "15.07" },
+  { numtren: "12554", salida: "17.20" },
+] };
+const buscando = { ...estadoInicial(), running: true, fase: FASE.WAIT, lastCycleAt: Date.now() - 12000 };
+for (const [id, inicial] of [["seleccion", estadoInicial()], ["busqueda", buscando]]) {
+  const panel = await import(`../src/content/panel/panel.js?showcase=${id}`);
+  let estado = structuredClone(inicial);
+  let seleccion = structuredClone(objetivo);
+  const pintar = () => panel.actualizarPanel(estado, seleccion);
+  panel.montarPanel({
+    alPulsarPrincipal() { estado = { ...estado, running: !estado.running, fase: estado.running ? FASE.IDLE : FASE.WAIT, lastCycleAt: Date.now() }; pintar(); },
+    alReiniciar() { seleccion.trenes = []; estado = estadoInicial(); pintar(); },
+    alQuitarTren(num) { seleccion.trenes = seleccion.trenes.filter(t => t.numtren !== num); if (!seleccion.trenes.length) estado = { ...estado, running: false, fase: FASE.IDLE }; pintar(); },
+    alCambiarIntervalo(intervalSec) { estado.settings = { ...estado.settings, intervalSec }; pintar(); },
+    alCambiarDiagnostico(debug) { estado.settings = { ...estado.settings, debug }; pintar(); },
+  });
+  const host = document.getElementById("renfebot-panel");
+  host.id = `showcase-${id}`;
+  host.style.display = "block";
+  document.getElementById(id).append(host);
+  Object.assign(host.shadowRoot.querySelector(".br-ui").style, { position: "static", width: "344px", maxHeight: "none" });
+  pintar();
+}
+await montarPopupDemo(document.querySelector("iframe"), { ...buscando, targets: [objetivo], activeTargetId: objetivo.id });
+</script>
+</body>
+</html>

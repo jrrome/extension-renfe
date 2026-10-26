@@ -4,11 +4,11 @@ const TECNICO = {
   [FASE.IDLE]: "Parado",
   [FASE.SCAN]: "Comprobando trenes",
   [FASE.WAIT]: "Esperando",
-  [FASE.REFRESH]: "Refrescando busqueda",
+  [FASE.REFRESH]: "Refrescando búsqueda",
   [FASE.CONFIRM]: "Confirmando reserva",
   [FASE.DONE]: "Reservado",
   [FASE.PAUSED_ERRORS]: "Pausado por errores",
-  [FASE.PAUSED_CHALLENGE]: "Verificacion de Renfe",
+  [FASE.PAUSED_CHALLENGE]: "Verificación de Renfe",
 };
 
 // scan, wait y refresh son tres pasos internos de una sola cosa vista desde fuera:

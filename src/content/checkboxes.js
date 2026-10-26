@@ -9,9 +9,13 @@ const ATTR_MARCADO = "data-renfebot-listo";
 const ESTILOS = `
 .${CLASE_CAJA} {
   position: absolute; left: 2px; top: 50%; transform: translateY(-50%);
-  width: 17px; height: 17px; margin: 0; cursor: pointer; z-index: 5;
-  accent-color: #6b1f7c;
+  box-sizing: border-box; appearance: none; width: 18px; height: 18px; margin: 0; cursor: pointer; z-index: 5;
+  border: 1px solid #fff; border-radius: 6px; background: #f5f5f5;
+  box-shadow: inset 2px 2px 4px #00000014, inset -2px -2px 4px #fff;
 }
+.${CLASE_CAJA}:checked { background: #fff; box-shadow: 0 2px 6px #00000012, inset 0 1px 1px #fff; }
+.${CLASE_CAJA}:checked::after { content: ""; position: absolute; width: 8px; height: 5px; left: 4px; top: 4px; border-left: 1.7px solid #7f93ee; border-bottom: 1.7px solid #7f93ee; transform: rotate(-45deg); }
+.${CLASE_CAJA}:focus-visible { outline: 2px solid #96a5ed; outline-offset: 3px; }
 tr[${ATTR_MARCADO}] > td:first-child { position: relative; padding-left: 24px !important; }
 `;
 
@@ -41,7 +45,8 @@ export function montarCheckboxes(vigilados, alCambiar) {
       caja = document.createElement("input");
       caja.type = "checkbox";
       caja.className = CLASE_CAJA;
-      caja.title = "vigilar este tren";
+      caja.title = `Vigilar el tren ${numtren}`;
+      caja.setAttribute("aria-label", caja.title);
       caja.addEventListener("change", () => {
         alCambiar(numtren, porNumero.get(numtren)?.salida || "", caja.checked);
       });

@@ -49,7 +49,7 @@ done
 
 # cada js que el manifest o el codigo cargan por ruta tiene que existir de verdad:
 # una ruta rota aqui solo se ve al cargar la extension, que es tarde
-for ruta in src/content/boot.js src/content/index.js src/content/pageScript.js src/popup/popup.html; do
+for ruta in src/content/boot.js src/content/index.js src/content/pageScript.js src/popup/popup.html src/shared/ui.js src/shared/ui.css src/shared/icons.js src/shared/lucide-icons.js src/shared/lucide.LICENSE src/shared/fonts/InterVariable.woff2 src/shared/fonts/OFL.txt icons/bot-renfe.svg; do
   [ -f "$destino/$ruta" ] || { echo "falta $ruta" >&2; exit 1; }
 done
 echo "    completo"

@@ -6,33 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bot Renfe · popup de ejemplo</title>
   <style>
-    body { margin: 0; padding: 30px; background: #f2eef4; font: 14px/1.5 -apple-system, sans-serif; color: #241228; }
-    main { width: 300px; margin: 0 auto; }
-    h1 { margin: 0 0 8px; font-size: 24px; }
-    p { margin: 0 0 22px; color: #716177; font-size: 12px; }
-    iframe { display: block; width: 300px; height: 550px; border: 0; border-radius: 12px; box-shadow: 0 8px 28px #24122833; }
+    body { margin: 0; padding: 30px; background: #eee; font: 14px/1.5 -apple-system, sans-serif; color: #606060; }
+    main { width: 360px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 26px; font-weight: 550; letter-spacing: -.8px; }
+    p { margin: 0 0 22px; color: #8e8b98; font-size: 12px; }
+    iframe { display: block; width: 360px; height: 540px; border: 0; outline: 1px solid #fff; border-radius: 30px; box-shadow: 0 16px 35px #0000000b, 0 -2px 6px #ffffffd9; }
   </style>
 </head>
 <body>
 <main><h1>Control desde el popup</h1><p>Interfaz real · datos de ejemplo</p><iframe title="Popup de Bot Renfe"></iframe></main>
 <script type="module">
 import { estadoInicial, FASE } from "../src/shared/state.js";
-const estado = { ...estadoInicial(), running: true, fase: FASE.WAIT,
-  activeTargetId: "demo", targets: [{ id: "demo", fecha: "25/10/2026", trenes: [
+import { montarPopupDemo } from "./popup-preview.js?v=3";
+const estado = { ...estadoInicial(), running: true, fase: FASE.WAIT, lastCycleAt: Date.now() - 12000,
+  activeTargetId: "demo", targets: [{ id: "demo", fecha: "26/10/2026", trenes: [
     { numtren: "09132", salida: "14.53" }, { numtren: "09140", salida: "15.07" },
   ] }] };
-const base = new URL("../src/popup/", location.href).href;
-const mock = `let almacen = ${JSON.stringify(estado)};
-  const listeners = [];
-  window.chrome = {
-    storage: { local: {
-      async get() { return { estado: structuredClone(almacen) }; },
-      async set(datos) { almacen = structuredClone(datos.estado); listeners.forEach(fn => fn({ estado: { newValue: almacen } }, "local")); },
-    }, onChanged: { addListener(fn) { listeners.push(fn); } } },
-    tabs: { async query() { return []; }, async sendMessage() {} },
-  };`;
-const html = await (await fetch("../src/popup/popup.html")).text();
-document.querySelector("iframe").srcdoc = html.replace("<head>", `<head><base href="${base}"><script>${mock}<\/script>`);
+await montarPopupDemo(document.querySelector("iframe"), estado);
 </script>
 </body>
 </html>

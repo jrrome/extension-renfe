@@ -157,6 +157,8 @@ async function enPaginaDeTrenes(estado) {
       await asegurarObjetivo();
       await pintar();
     },
+    alCambiarDiagnostico: (debug) =>
+      actualizarEstado((actual) => ({ settings: { ...actual.settings, debug } })),
     alCambiarIntervalo: (segundos) =>
       actualizarEstado((actual) => ({
         settings: { ...actual.settings, intervalSec: normalizarIntervalo(segundos) },

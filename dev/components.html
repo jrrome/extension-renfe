@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bot Renfe · componentes</title>
+  <link rel="icon" href="../icons/icon32.png">
+  <link rel="stylesheet" href="../src/shared/ui.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: linear-gradient(#eee, #e6e6e6); }
+    main.br-ui { min-height: 704px; width: 1200px; max-width: 100%; margin: auto; padding: 230px 60px 70px; background: none; }
+    .status-row { display: flex; justify-content: center; gap: 26px; }
+    .status-row + .status-row { margin-top: 26px; }
+    .ui-status-pill { max-width: none; font-size: 40px; }
+    footer { margin-top: 95px; color: #aaa; font-size: 12px; text-align: center; }
+    @media (max-width: 900px) { main.br-ui { padding: 70px 24px; } .status-row { flex-wrap: wrap; } .ui-status-pill { font-size: 28px; } }
+  </style>
+</head>
+<body>
+<main class="br-ui">
+  <div class="status-row" id="fila-1"></div>
+  <div class="status-row" id="fila-2"></div>
+  <footer>Bot Renfe · componentes de estado</footer>
+</main>
+<script type="module">
+import { crearInterfaz, pintarInterfaz, cargarTipografia } from "../src/shared/ui.js";
+import { estadoInicial, FASE } from "../src/shared/state.js";
+cargarTipografia(document);
+const ejemplos = [
+  [FASE.PAUSED_CHALLENGE, "Pendiente", "fila-1"],
+  [FASE.WAIT, "Buscando", "fila-1"],
+  [FASE.DONE, "Reservado", "fila-1"],
+  [FASE.PAUSED_ERRORS, "Error", "fila-2"],
+  [FASE.IDLE, "Parado", "fila-2"],
+];
+for (const [fase, texto, fila] of ejemplos) {
+  const contenedor = document.createElement("div");
+  contenedor.innerHTML = crearInterfaz({ popup: true });
+  pintarInterfaz(contenedor, { ...estadoInicial(), fase, running: fase === FASE.WAIT }, null);
+  const pill = contenedor.querySelector(".ui-status-pill");
+  pill.querySelector(".ui-status-text").textContent = texto;
+  document.getElementById(fila).append(pill);
+}
+</script>
+</body>
+</html>

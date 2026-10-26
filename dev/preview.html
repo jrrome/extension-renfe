@@ -7,35 +7,35 @@
   <title>Bot Renfe · vista previa</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; background: #f2eef4; color: #241228; font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    main { max-width: 1100px; margin: 0 auto; padding: 44px 32px; }
-    .eyebrow { margin: 0 0 8px; color: #6b1f7c; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-    h1 { margin: 0; font-size: 36px; letter-spacing: -1.3px; }
-    .intro { margin: 12px 0 32px; color: #716177; max-width: 680px; }
-    .galeria { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-    article { min-width: 0; padding: 18px 16px 22px; background: #e8e0eb; border: 1px solid #ddd0e2; border-radius: 16px; }
-    h2 { margin: 0 0 22px; font-size: 12px; font-weight: 650; color: #6b1f7c; }
-    .slot { min-height: 278px; display: flex; align-items: flex-start; justify-content: center; }
+    body { margin: 0; background: #eee; color: #606060; font: 15px/1.6 "Bot Renfe Inter", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+    main { max-width: 1280px; margin: 0 auto; padding: 56px 50px 48px; }
+    .eyebrow { display: inline-block; margin: 0 0 16px; padding: 7px 12px; border: 1px solid #fff; border-radius: 12px; color: #898391; background: #f6f6f9; box-shadow: 3px 4px 10px #bec0cc33, -3px -3px 8px #fff; font-size: 10px; font-weight: 550; letter-spacing: 1.1px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 35px; font-weight: 550; letter-spacing: -1.6px; }
+    .intro { margin: 10px 0 38px; color: #8e8b98; max-width: 690px; font-size: 13px; }
+    .galeria { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 42px 36px; align-items: start; }
+    article { min-width: 0; padding: 0; }
+    h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 16px 5px; font-size: 10px; font-weight: 500; color: #8f8b9b; letter-spacing: .15px; }
+    .slot { display: flex; justify-content: center; }
     .slot > div { width: 100%; }
-    footer { margin-top: 28px; color: #716177; font-size: 12px; }
-    a { color: #6b1f7c; }
+    footer { margin-top: 42px; padding-top: 20px; border-top: 1px solid #e2e2e8; color: #96929f; font-size: 10px; }
+    a { color: #8c73b3; text-decoration-color: #c6bbd8; text-underline-offset: 3px; }
     #renfebot-panel { display: none; }
-    @media (max-width: 900px) { .galeria { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 620px) { .galeria { grid-template-columns: 1fr; } main { padding: 28px 20px; } }
+    @media (max-width: 1050px) { .galeria { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 650px) { .galeria { grid-template-columns: 1fr; } main { padding: 28px 24px; } }
   </style>
 </head>
 <body>
 <main>
-  <p class="eyebrow">Extensión de Chrome · Manifest V3</p>
+  <p class="eyebrow">Vista previa de la interfaz</p>
   <h1>Bot Renfe</h1>
-  <p class="intro">Marca los trenes que te valen. La extensión busca plaza, intenta formalizar tu viaje y te avisa del resultado.</p>
+  <p class="intro">Selección, búsqueda y resultado. Componentes reales con datos de ejemplo.</p>
   <section class="galeria" id="escenas"></section>
   <footer>Interfaz real con datos de ejemplo. Esta página no se conecta a Renfe ni reserva billetes. <a href="popup.html">Ver el popup</a>.</footer>
 </main>
 <script type="module">
 import { FASE, estadoInicial } from "../src/shared/state.js";
 
-const VIGILADOS = { trenes: [
+const VIGILADOS = { fecha: "26/10/2026", trenes: [
   { numtren: "09132", salida: "14.53" },
   { numtren: "09140", salida: "15.07" },
   { numtren: "12554", salida: "17.20" },
@@ -48,10 +48,10 @@ const CASOS = [
   ["01 / Elige tus trenes", { fase: FASE.IDLE }, VIGILADOS],
   ["02 / Buscando plaza", BUSCANDO, VIGILADOS],
   ["03 / Reserva completada", { fase: FASE.DONE, cycle: 38, lastCycleAt: Date.now(), result: { numtren: "09140" } },
-    { trenes: [{ numtren: "09140", salida: "15.07" }] }],
+    { fecha: "26/10/2026", trenes: [{ numtren: "09140", salida: "15.07" }] }],
   ["04 / Antes de empezar", { fase: FASE.IDLE }, { trenes: [] }],
-  ["05 / Modo diagnóstico", { ...BUSCANDO, settings: { ...estadoInicial().settings, debug: true } }, VIGILADOS],
-  ["06 / Verificación pendiente", { fase: FASE.PAUSED_CHALLENGE, lastError: "Renfe pide una verificacion. Resuelvela tu y reanuda." }, VIGILADOS],
+  ["05 / Búsqueda pausada", { fase: FASE.PAUSED_ERRORS, lastError: "No se puede actualizar la tabla. Revisa la página y reanuda." }, VIGILADOS],
+  ["06 / Verificación pendiente", { fase: FASE.PAUSED_CHALLENGE, lastError: "Renfe pide una verificación. Resuélvela y reanuda." }, VIGILADOS],
 ];
 
 for (const [i, [titulo, parcial, objetivo]] of CASOS.entries()) {
@@ -63,15 +63,43 @@ for (const [i, [titulo, parcial, objetivo]] of CASOS.entries()) {
   escena.append(heading, slot);
   document.getElementById("escenas").appendChild(escena);
   const modulo = await import(`../src/content/panel/panel.js?preview=${i}`);
-  modulo.montarPanel({});
+  let estadoDemo = { ...estadoInicial(), ...parcial };
+  let objetivoDemo = structuredClone(objetivo);
+  const pintarDemo = () => modulo.actualizarPanel(estadoDemo, objetivoDemo);
+  modulo.montarPanel({
+    alPulsarPrincipal() {
+      estadoDemo = { ...estadoDemo, running: !estadoDemo.running,
+        fase: estadoDemo.running ? FASE.IDLE : FASE.WAIT, lastCycleAt: Date.now() };
+      pintarDemo();
+    },
+    alQuitarTren(numero) {
+      objetivoDemo.trenes = objetivoDemo.trenes.filter(tren => tren.numtren !== numero);
+      if (!objetivoDemo.trenes.length) estadoDemo = { ...estadoDemo, running: false, fase: FASE.IDLE };
+      pintarDemo();
+    },
+    alReiniciar() {
+      estadoDemo = estadoInicial();
+      objetivoDemo.trenes = [];
+      pintarDemo();
+    },
+    alCambiarDiagnostico(debug) {
+      estadoDemo.settings = { ...estadoDemo.settings, debug };
+      pintarDemo();
+    },
+    alCambiarIntervalo(segundos) {
+      estadoDemo.settings = { ...estadoDemo.settings, intervalSec: Math.max(2, Math.min(60, Math.round(segundos) || 2)) };
+      pintarDemo();
+    },
+  });
   const host = document.getElementById("renfebot-panel");
   host.style.display = "block";
   host.id = `preview-panel-${i}`;
   slot.appendChild(host);
-  const panel = host.shadowRoot.querySelector(".panel");
+  const panel = host.shadowRoot.querySelector(".br-ui");
   panel.style.position = "static";
-  panel.style.width = "100%";
-  modulo.actualizarPanel({ ...estadoInicial(), ...parcial }, objetivo);
+  panel.style.width = "344px";
+  panel.style.maxWidth = "100%";
+  pintarDemo();
 }
 </script>
 </body>
